@@ -2,9 +2,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>TraSGen</groupId>
-  <artifactId>TraSGen</artifactId>
+  <artifactId>TrasGen</artifactId>
   <version>0.1</version>
   <build>
+    <resources>
+      <resource>
+        <directory>${basedir}/src/main/resources</directory>
+        <includes>
+          <include>schema.xsd</include>
+        </includes>
+      </resource>
+    </resources>
     <pluginManagement>
       <plugins>
         <plugin>
@@ -88,6 +96,13 @@
                 <transformer>
                   <mainClass>DataGen.StreamingJob</mainClass>
                 </transformer>
+                <transformer />
+                <transformer>
+                  <resource>META-INF/spring.handlers</resource>
+                </transformer>
+                <transformer>
+                  <resource>META-INF/spring.schemas</resource>
+                </transformer>
               </transformers>
             </configuration>
           </execution>
@@ -102,13 +117,23 @@
         <dependency>
           <groupId>org.apache.flink</groupId>
           <artifactId>flink-java</artifactId>
-          <version>${flink.version}</version>
+          <version>1.13.6</version>
           <scope>compile</scope>
+          <exclusions>
+            <exclusion>
+              <artifactId>log4j</artifactId>
+              <groupId>log4j</groupId>
+            </exclusion>
+            <exclusion>
+              <artifactId>slf4j-log4j12</artifactId>
+              <groupId>org.slf4j</groupId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>org.apache.flink</groupId>
-          <artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
-          <version>${flink.version}</version>
+          <artifactId>flink-streaming-java_2.11</artifactId>
+          <version>1.13.6</version>
           <scope>compile</scope>
         </dependency>
       </dependencies>
@@ -123,28 +148,48 @@
       <name>Central Maven repository</name>
       <url>http://central.maven.org/maven2</url>
     </repository>
+    <repository>
+      <releases />
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>osgeo</id>
+      <name>OSGeo Release Repository</name>
+      <url>https://repo.osgeo.org/repository/release/</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots />
+      <id>osgeo-snapshot</id>
+      <name>OSGeo Snapshot Repository</name>
+      <url>https://repo.osgeo.org/repository/snapshot/</url>
+    </repository>
   </repositories>
   <dependencies>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.7</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-      <scope>runtime</scope>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>hamcrest-core</artifactId>
+          <groupId>org.hamcrest</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
   <properties>
     <scala.binary.version>2.11</scala.binary.version>
     <maven.compiler.target>${java.version}</maven.compiler.target>
-    <java.version>1.8</java.version>
+    <java.version>8</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <flink.version>1.9.1</flink.version>
+    <log4j.version>2.17.0</log4j.version>
+    <geotools.version>28.0</geotools.version>
+    <flink.version>1.13.6</flink.version>
   </properties>
 </project>
 

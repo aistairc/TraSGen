@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Data Platform Research Team, AIRC, AIST, Japan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package DataGen.inputParameters;
 
 import org.apache.flink.shaded.jackson2.org.yaml.snakeyaml.Yaml;
@@ -51,28 +67,14 @@ public class Params {
     public static String initialTimeStamp;
     public static int timeStep;
     public static List<Integer> objIDRange;
-    public static List<Integer> trajectoryLength;
     public static long nRows;
     public static int consecutiveTrajTuplesIntervalMilliSec;
-    public static List<Double> bBox;
-    //public List<Double> varianceRange;
-    public static double seriesVariance;
-    public static List<Integer> nSidesRange;
-    public static List<Integer> nLineSegmentsRange;
-    public static List<Integer> nGeometryRange;
-    public static List<Integer> nHolesRange;
-    public static int geometryGenAlgorithm;
-    public static int multiGeometryGenAlgorithm;
+
 
     /* query */
-    public static String randomOption;
     public static String datatypeOption;
     public static CoordinateReferenceSystem coordinateReferenceSystem;
 
-    /* hotspotQuery */
-    public static List<List<Double>> hotspotMean;
-    public static List<List<Double>> hotspotVariance;
-    public static List<List<Double>> hotspotBBox;
 
     /* mappedTrajectories */
     public static String mapFile;
@@ -243,17 +245,7 @@ public class Params {
             catch (ClassCastException e) {
                 throw new IllegalArgumentException("objIDRange : " + e);
             }
-            try {
-                if ((trajectoryLength = (ArrayList)data.get("trajectoryLength")) == null) {
-                    throw new NullPointerException("trajectoryLength is " + data.get("trajectoryLength"));
-                }
-                if (trajectoryLength.size() != 2) {
-                    throw new IllegalArgumentException("trajectoryLength num is " + trajectoryLength.size());
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("trajectoryLength : " + e);
-            }
+
             try {
                 if(data.get("nRows") == null) {
                     throw new NullPointerException("nRows is " + data.get("nRows"));
@@ -277,109 +269,13 @@ public class Params {
             catch (ClassCastException e) {
                 throw new IllegalArgumentException("consecutiveTrajTuplesIntervalMilliSec: " + e);
             }
-            try {
-                if ((bBox = (ArrayList)data.get("bBox")) == null) {
-                    throw new NullPointerException("bBox is " + data.get("bBox"));
-                }
-                if (bBox.size() != 6) {
-                    throw new IllegalArgumentException("bBox num is " + bBox.size());
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("bBox : " + e);
-            }
-            try {
-                if(data.get("seriesVariance") == null) {
-                    throw new NullPointerException("seriesVariance is " + data.get("seriesVariance"));
-                }
-                else {
-                    seriesVariance = (double)data.get("seriesVariance");
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("seriesVariance : " + e);
-            }
-            try {
-                if ((nSidesRange = (ArrayList)data.get("nSidesRange")) == null) {
-                    throw new NullPointerException("nSidesRange is " + data.get("nSidesRange"));
-                }
-                if (nSidesRange.size() != 2) {
-                    throw new IllegalArgumentException("nSidesRange num is " + nSidesRange.size());
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("nSidesRange : " + e);
-            }
-            try {
-                if ((nLineSegmentsRange = (ArrayList)data.get("nLineSegmentsRange")) == null) {
-                    throw new NullPointerException("nLineSegmentsRange is " + data.get("nLineSegmentsRange"));
-                }
-                if (nLineSegmentsRange.size() != 2) {
-                    throw new IllegalArgumentException("nLineSegmentsRange num is " + nLineSegmentsRange.size());
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("nLineSegmentsRange : " + e);
-            }
-            try {
-                if ((nHolesRange = (ArrayList)data.get("nHolesRange")) == null) {
-                    throw new NullPointerException("nHolesRange is " + data.get("nHolesRange"));
-                }
-                if (nHolesRange.size() != 2) {
-                    throw new IllegalArgumentException("nHolesRange num is " + nHolesRange.size());
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("nHolesRange : " + e);
-            }
-            try {
-                if ((nGeometryRange = (ArrayList)data.get("nGeometryRange")) == null) {
-                    throw new NullPointerException("nGeometryRange is " + data.get("nGeometryRange"));
-                }
-                if (nGeometryRange.size() != 2) {
-                    throw new IllegalArgumentException("nGeometryRange is " + nGeometryRange.size());
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("nGeometryRange : " + e);
-            }
-            try {
-                if (data.get("geometryGenAlgorithm") == null) {
-                    throw new NullPointerException("geometryGenAlgorithm is " + data.get("geometryGenAlgorithm"));
-                }
-                else {
-                    geometryGenAlgorithm = (int)data.get("geometryGenAlgorithm");
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("geometryGenAlgorithm : " + e);
-            }
-            try {
-                if (data.get("multiGeometryGenAlgorithm") == null) {
-                    throw new NullPointerException("multiGeometryGenAlgorithm is " + data.get("multiGeometryGenAlgorithm"));
-                }
-                else {
-                    multiGeometryGenAlgorithm = (int)data.get("multiGeometryGenAlgorithm");
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("multiGeometryGenAlgorithm : " + e);
-            }
+
         }
         catch (ClassCastException e) {
             throw new IllegalArgumentException("data : " + e);
         }
 
         /* query */
-        try {
-            if ((randomOption = (String)config.getQuery().get("randomOption")) == null) {
-                throw new NullPointerException("random option is " + config.getQuery().get("randomOption"));
-            }
-        }
-        catch (ClassCastException e) {
-            throw new IllegalArgumentException("random option : " + e);
-        }
-
         try {
             if ((datatypeOption = (String)config.getQuery().get("datatypeOption")) == null) {
                 throw new NullPointerException("datatype option is " + config.getQuery().get("datatypeOption"));
@@ -410,52 +306,6 @@ public class Params {
             throw new IllegalArgumentException("coordinateReferenceSystem option : " + e);
         }
 
-        /* query - hotspot query */
-        try {
-            Map<String, Object> hotspotQuery;
-            if ((hotspotQuery = (Map<String, Object>)config.getQuery().get("hotspotQuery")) == null) {
-                throw new NullPointerException("file is " + config.getOutput().get("file"));
-            }
-            try {
-                if(hotspotQuery.get("mean") == null) {
-                    throw new NullPointerException("mean is " + hotspotQuery.get("mean"));
-                }
-                else {
-                    hotspotMean = (List<List<Double>>)hotspotQuery.get("mean");
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("mean : " + e);
-            }
-
-            try {
-                if(hotspotQuery.get("variance") == null) {
-                    throw new NullPointerException("variance is " + hotspotQuery.get("variance"));
-                }
-                else {
-                    hotspotVariance = (List<List<Double>>)hotspotQuery.get("variance");
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("variance : " + e);
-            }
-
-            try {
-                if(hotspotQuery.get("bbox") == null) {
-                    throw new NullPointerException("bbox is " + hotspotQuery.get("bbox"));
-                }
-                else {
-                    hotspotBBox = (List<List<Double>>)hotspotQuery.get("bbox");
-                }
-            }
-            catch (ClassCastException e) {
-                throw new IllegalArgumentException("bbox : " + e);
-            }
-        }
-        catch (ClassCastException e) {
-            throw new IllegalArgumentException("hotspot query : " + e);
-        }
-
         /* mappedTrajectories */
         try {
             Map<String, Object> mappedTrajectories;
@@ -474,9 +324,6 @@ public class Params {
 //                            "conf" + File.separator + (String)mappedTrajectories.get("mapFile");
 //                    mapFile = mapfilePath;
                 }
-
-
-
 
             }
             catch (ClassCastException e) {
@@ -715,24 +562,11 @@ public class Params {
                 "\n" +
                 "dateFormat = " + dateFormat + ", " +
                 "objIDRange = " + objIDRange + ", " +
-                "trajectoryLength = " + trajectoryLength + ", " +
                 "nRows = " + nRows + ", " +
                 "\nconsecutiveTrajTuplesIntervalMilliSec = " + consecutiveTrajTuplesIntervalMilliSec + ", " +
-                "bBox = " + bBox + ", " +
-                "seriesVariance = " + seriesVariance + ", " +
-                "nSidesRange = " + nSidesRange + ", " +
-                "nLineSegmentsRange = " + nLineSegmentsRange + ", " +
-                "nGeometryRange = " + nGeometryRange + ", " +
-                "nHolesRange = " + nHolesRange + ", " +
-                "geometryGenAlgorithm = " + geometryGenAlgorithm + ", " +
-                "multiGeometryGenAlgorithm = " + multiGeometryGenAlgorithm + ", " +
                 "\n" +
                 "trajectoryType = " + trajectoryType + ", " +
-                "randomOption = " + randomOption + ", " +
                 "datatypeOption = " + datatypeOption + ", " +
-                "\n" +
-                "hotspotMean = " + hotspotMean + ", " +
-                "hotspotVariance = " + hotspotVariance +
                 "\n" +
                 "mapFile = " + mapFile + ", " +
                 "mapFileFormat = " + mapFileFormat +

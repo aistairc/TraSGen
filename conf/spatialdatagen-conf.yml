@@ -1,7 +1,6 @@
 # This is a kafkaproducer Config File
 # The coordinates in this file follow (x,y) = (longitude, latitude) format
 
-
 # Cluster
 clusterMode: false
 parallelism: 5
@@ -16,7 +15,6 @@ output:
   kafka:
     outputTopicName: "SpatialDataGenOutput"
     #bootStrapServers: "172.16.0.64:9092, 172.16.0.81:9092"
-    #bootStrapServers: "150.82.97.204:9092"
     bootStrapServers: "localhost:9092"
 
   # file
@@ -34,63 +32,28 @@ output:
     randomizeTimeInBatch: False
     # numberOfTrajectories at any time instant. Time stream object IDs are generated in the following range
     objIDRange: [1, 100000] # Upper bound inclusive
-    # minTrajLength and maxTrajLength in number of points
-    trajectoryLength: [100, 1000]
     # Set nRows to -1 for infinite number of rows
     nRows: -1
     # consecutive Traj Tuples Generation Interval in seconds. 0 for no interval (max throughput)
     consecutiveTrajTuplesIntervalMilliSec: 0
-    # minX, minY, mixZ, maxX, maxY, maxZ
-    #bBox: [115.5, 39.6, 117.6, 41.1]
-    bBox: [0.0, 0.0, 0.0, 100.0, 100.0, 0.0]
-    # seriesVariance
-    seriesVariance: 0.0001
-    # Number of sides range for polygon stream. Set both the values same for fixed number of sides
-    nSidesRange: [5, 10]
-    # Number of linestring range for polygon stream. Set both the values same for fixed number of sides
-    nLineSegmentsRange: [5, 10]
-    # Number of geometries for multiGeometry streams. Set both the values same for fixed number of geometries
-    nGeometryRange: [2, 5]
-    # Number of holes in polygon or multiPolygon streams. Set both the values same for fixed number of geometries
-    nHolesRange: [0, 5]
-    # Number of geometry generate algorithm
-    geometryGenAlgorithm: 0
-    # Number of multi geometry generate algorithm
-    multiGeometryGenAlgorithm: 2
-
 
 # Query parameters
 query:
   # randomPoints, gaussianPoints, randomMultiPoints, gaussianMultiPoints, randomLineStrings, gaussianLineStrings, randomPolygons, gaussianPolygons, randomMultiPolygons, gaussianMultiPolygons
-  randomOption: "none"    # uniform, gaussian, gaussianRW, brownRW, hotspot, hotspotRW, none
-  datatypeOption : "networkPoint"   # point, multiPoint, networkPoint
+  datatypeOption : "networkPoint"   # point, multiPoint, networkPoint #TODO this needs to be set as default
   coordinateReferenceSystem : "EPSG:4326"   # WGS84 (EPSG:4326), Google (EPSG:3857)
-
-  # HotspotQuery parameters
-  hotspotQuery:
-    mean: [[10.0, 15.0, 0.0], [55.0, 75.0, 0], [90.0, 25.0, 0]]
-    variance: [[3.0, 3.0, 0.0], [6.0, 3.0, 0.0], [3.0, 8.0, 0.0]]
-    # minX, minY, mixZ, maxX, maxY, maxZ
-    #bbox: [[0.0, 0.0, 0.0, 25.0, 30.0, 0.0], [40.0, 60.0, 0.0, 70.0, 90.0, 0.0], [60.0, 10.0, 0.0, 100.0, 40.0, 0.0]]
-    bbox: [[0.0, 0.0, 0.0, 100.0, 100.0, 0.0], [0.0, 0.0, 0.0, 100.0, 100.0, 0.0], [0.0, 0.0, 0.0, 100.0, 100.0, 0.0]]
 
   # Road network based Data Generation
   mappedTrajectories:
-    # mapFile: /home/salman/Dropbox/AIST/Research/SpatialDataGen/3LineStringsOdaiba.geojson
-    # mapFile: /media/Data/Datasets/SpatialMaps/3LineStringsOdaiba.geojson
-    # mapFile: /data1/datasets/SpatialMaps/3LineStringsOdaiba.geojson
-    # mapFile: /data1/datasets/SpatialMaps/madagascar.geojson
-    # mapFile: /media/Data/Datasets/SpatialMaps/3LineStringsOdaiba.geojson
-    mapFile: /home/komal/maps/benin_roads.geojson
-#    mapFile: /Users/komalmariam/Kafka_Main/madagascar.geojson
+    mapFile: /Users/komalmariam/Kafka_Main/benin_roads.geojson
     #    mapFile: /media/Data/Datasets/SpatialMaps/madagascar.geojson
     # mapFile: /media/Data/Datasets/SpatialMaps/myanmar_railways_edited.geojson
     #     mapFile: /media/Data/Datasets/SpatialMaps/benin_roads.geojson
     format: "GeoJSON"
     shortestPathAlgorithm: "astar"       # dijkstra, astar
     nodeMappingTolerance: 0.00001
-    trajectoryType: "vehicle"          # vehicle, pedestrian, none
-    interWorkersDataSharing: "redis"           # none, redis, broadcast
+    trajectoryType: "vehicle"          # vehicle, pedestrian, none  #TODO expand to other types
+    interWorkersDataSharing: "none"           # none, redis, broadcast
     sync: False
     syncPercentage: 75.0
     trajStartEndSelectionApproach: "random"    # random, userdefined, region
@@ -117,6 +80,5 @@ query:
 # Redis parameters
 redis:
   redisAddresses: "redis://172.16.0.126:6379, redis://172.16.0.70:6379, redis://172.16.0.121:6379"
-#  redisAddresses: "redis://172.16.0.126:6379, redis://172.16.0.70:6379, redis://172.16.0.121:6379"
   redisServerType: "cluster"  #standalone, cluster
 

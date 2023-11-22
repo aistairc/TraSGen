@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Data Platform Research Team, AIRC, AIST, Japan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package DataGen.timeSeriesGenerators;
 
 import DataGen.timeSeriesGenerators.network.NetworkDistribution;
@@ -13,7 +29,6 @@ import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
@@ -23,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import DataGen.inputParameters.Params;
 
 public class NetworkPointStreamGenerator implements StreamGenerator, Serializable {
     private String redisServerType;
@@ -85,7 +99,7 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
 
 
     @Override
-    public DataStream<String> generate(DataStream<Tuple2<Integer, Long>> objIDStream, Envelope seriesBBox, SimpleDateFormat simpleDateFormat) throws Exception {
+    public DataStream<String> generate(DataStream<Tuple2<Integer, Long>> objIDStream, SimpleDateFormat simpleDateFormat) throws Exception {
         return objIDStream
                 .keyBy(new HelperClass.objIDKeySelectorWithBatchID())
                 .flatMap(new NetworkRichFlatMapFunction<Coordinate>(Coordinate.class, networkDistribution, this.shortestIDPathMap, this.crs, this.displacementMetersPerSecond, this.interWorkersDataSharing, this.redisAddresses, this.redisServerType) {

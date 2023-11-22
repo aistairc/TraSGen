@@ -1,7 +1,5 @@
 package DataGen.timeSeriesGenerators;
 
-
-import DataGen.inputParameters.Params;
 import DataGen.timeSeriesGenerators.network.NetworkDistribution;
 import DataGen.utils.HelperClass;
 import DataGen.utils.NetworkPath;
@@ -30,7 +28,6 @@ import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
@@ -109,7 +106,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
     }
 
     @Override
-    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream, Envelope seriesBBox, SimpleDateFormat simpleDateFormat) {
+    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream, SimpleDateFormat simpleDateFormat) {
 
         //read edge information from Kafka topic Feedback
         DataStream<String> edgeTrafficCountString = this.env.addSource(new FlinkKafkaConsumer<>("Feedback", new SimpleStringSchema(), this.kafkaProperties));

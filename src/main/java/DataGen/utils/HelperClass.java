@@ -1,10 +1,21 @@
+/*
+ * Copyright 2023 Data Platform Research Team, AIRC, AIST, Japan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package DataGen.utils;
 
-//import jdk.internal.util.xml.impl.Pair;
-import DataGen.geometryGenerator.GeometryGenerator;
-import DataGen.geometryGenerator.LineStringGenerator;
-import DataGen.geometryGenerator.MultiGenerator;
-import DataGen.geometryGenerator.PolygonGenerator;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.shaded.akka.org.jboss.netty.util.internal.ThreadLocalRandom;
@@ -22,7 +33,7 @@ import java.util.*;
 
 public class HelperClass {
 
-    private static Random generator = new Random(12345);
+    private static Random generator = new Random();
 
     // Methods
     //Generate Random XY coordinate
@@ -114,65 +125,6 @@ public class HelperClass {
         GeometryFactory geometryFactory = new GeometryFactory();
         return geometryFactory.createPoint(coordinate);
     }
-
-    public static Geometry generatePolygon(int nPoints, int nHoles, Envelope bBox, int geometryGenAlgorithm){
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        PolygonGenerator polygonGenerator = GeometryGenerator.createPolygonGenerator();
-        polygonGenerator.setGeometryFactory(geometryFactory);
-        polygonGenerator.setBoundingBox(bBox);
-        polygonGenerator.setNumberPoints(nPoints);
-        polygonGenerator.setNumberHoles(nHoles);
-        polygonGenerator.setGenerationAlgorithm(geometryGenAlgorithm); // 0: Box, 1: Arc, 2: Rnd
-        return polygonGenerator.create();
-    }
-
-    public static Geometry generateLineString(int nPoints, Envelope bBox, int geometryGenAlgorithm){
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        LineStringGenerator lineStringGenerator = GeometryGenerator.createLineStringGenerator();
-        lineStringGenerator.setGeometryFactory(geometryFactory);
-        lineStringGenerator.setBoundingBox(bBox);
-        lineStringGenerator.setNumberPoints(nPoints);
-        lineStringGenerator.setGenerationAlgorithm(geometryGenAlgorithm); //0: Vertical, 1: Horizontal, 2: Arc, 3:Random
-        return lineStringGenerator.create();
-    }
-
-    public static Geometry generateMultiPoint(int numGeometries, Envelope bBox, int multiGeometryGenAlgorithm){
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        MultiGenerator multiPointGenerator = MultiGenerator.createMultiPointGenerator();
-        multiPointGenerator.setNumberGeometries(numGeometries);
-        multiPointGenerator.setGeometryFactory(geometryFactory);
-        multiPointGenerator.setBoundingBox(bBox);
-        multiPointGenerator.setGenerationAlgorithm(multiGeometryGenAlgorithm); //0: Box, 1: Vertical, 2: Horizontal
-        return multiPointGenerator.create();
-    }
-
-    public static Geometry generateMultiLineString(int nPoints, int nGeometries, Envelope bBox, int multiGeometryGenAlgorithm, int geometryGenAlgorithm){
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        MultiGenerator multiLineStringGenerator = MultiGenerator.createMultiLineStringGenerator(nPoints, geometryGenAlgorithm);
-        multiLineStringGenerator.setNumberGeometries(nGeometries);
-        multiLineStringGenerator.setGeometryFactory(geometryFactory);
-        multiLineStringGenerator.setBoundingBox(bBox);
-        multiLineStringGenerator.setGenerationAlgorithm(multiGeometryGenAlgorithm); //0: Box, 1: Vertical, 2: Horizontal, 3:Random
-        return multiLineStringGenerator.create();
-
-        //throw new NullPointerException("Could not create linestring");
-    }
-
-    public static Geometry generateMultiPolygon(int nPoints, int nHoles, int nGeometries, Envelope bBox, int multiGeometryGenAlgorithm, int geometryGenAlgorithm){
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        MultiGenerator multiPolygonGenerator = MultiGenerator.createMultiPolygonGenerator(nPoints, nHoles, geometryGenAlgorithm);
-        multiPolygonGenerator.setNumberGeometries(nGeometries);
-        multiPolygonGenerator.setGeometryFactory(geometryFactory);
-        multiPolygonGenerator.setBoundingBox(bBox);
-        multiPolygonGenerator.setGenerationAlgorithm(multiGeometryGenAlgorithm); //0: Box, 1: Vertical, 2: Horizontal
-        return multiPolygonGenerator.create();
-    }
-
 
     // Classes
 

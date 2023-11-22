@@ -1,13 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright 2023 Data Platform Research Team, AIRC, AIST, Japan
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,13 +35,10 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
@@ -71,7 +66,6 @@ public class StreamingJob implements Serializable {
 		boolean onCluster = Params.clusterMode;
 		int parallelism = Params.parallelism;
 		String trajectoryType = Params.trajectoryType;
-		String randomOption = Params.randomOption;
 		String datatypeOption = Params.datatypeOption;
 		String outputOption = Params.outputOption;
 		String outputTopicName = Params.outputTopicName;
@@ -80,25 +74,9 @@ public class StreamingJob implements Serializable {
 		String redisAddresses = Params.redisAddresses;
 		String redisServerType = Params.redisServerType;
 
-		List<List<Double>> hotspotMean = Params.hotspotMean;
-		List<List<Double>> hotspotVariance = Params.hotspotVariance;
-		List<List<Double>> hotspotBBox = Params.hotspotBBox;
-		List<Coordinate> listHotspotMean = new ArrayList<>();
-		List<Coordinate> listHotspotVariance = new ArrayList<>();
-		List<Tuple2<Coordinate, Coordinate>> listHotspotBBox = new ArrayList<>();
 
 		String format = Params.outputFormat;
 		long numRows = Params.nRows;
-		double minX = Params.bBox.get(0);
-		double minY = Params.bBox.get(1);
-		double minZ = Params.bBox.get(2);
-		double maxX = Params.bBox.get(3);
-		double maxY = Params.bBox.get(4);
-		double maxZ = Params.bBox.get(5);
-
-		Coordinate minCoordinate = new Coordinate(minX, minY, minZ);
-		Coordinate maxCoordinate = new Coordinate(maxX, maxY, maxZ);
-		Envelope seriesBBox = new Envelope(minCoordinate, maxCoordinate);
 
 		String trajStartEndSelectionApproach = Params.trajStartEndSelectionApproach;
 		List<List<Double>> trajStartEndCoordinatePairs = Params.trajStartEndCoordinatePairs;
@@ -121,18 +99,8 @@ public class StreamingJob implements Serializable {
 		String dateTimeFormat = Params.dateFormat;
 		String initialTimeStamp = Params.initialTimeStamp;
 		int timeStep = 	Params.timeStep;
-		double seriesVar = Params.seriesVariance;
-		int minPolygonSides = Params.nSidesRange.get(0);
-		int maxPolygonSides = Params.nSidesRange.get(1);
-		int minLineStringSegments = Params.nLineSegmentsRange.get(0);
-		int maxLineStringSegments = Params.nLineSegmentsRange.get(1);
 		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateTimeFormat);
-		int minGeometries = Params.nGeometryRange.get(0);
-		int maxGeometries = Params.nGeometryRange.get(1);
-		int minGeometryHoles = Params.nHolesRange.get(0);
-		int maxGeometryHoles = Params.nHolesRange.get(1);
-		int geometryGenAlgorithm = Params.geometryGenAlgorithm;
-		int multiGeometryGenAlgorithm = Params.multiGeometryGenAlgorithm;
+
 		String mapFile = Params.mapFile;
 		String mapFileFormat = Params.mapFileFormat;
 		String shortestPathAlgorithmStr = Params.shortestPathAlgorithm;
@@ -199,31 +167,6 @@ public class StreamingJob implements Serializable {
 		StreamGenerator streamGenerator = null;
 		Random timeGen = new Random();
 		switch (datatypeOption) {
-			case "point": {
-				streamGenerator = new PointStreamGenerator(seriesBBox, format, dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
-				break;
-			}
-			case "lineString": {
-				streamGenerator = new LineStringStreamGenerator(seriesBBox, minLineStringSegments, maxLineStringSegments, geometryGenAlgorithm, format,  dateTimeFormat, initialTimeStamp, timeStep, timeGen, randomizeTimeInBatch);
-				break;
-			}
-			case "polygon": {
-				streamGenerator = new PolygonStreamGenerator(minPolygonSides, maxPolygonSides, minGeometryHoles, maxGeometryHoles, geometryGenAlgorithm, format, dateTimeFormat, initialTimeStamp, timeStep, timeGen, randomizeTimeInBatch);
-				break;
-			}
-			case "multiPoint": {
-				streamGenerator = new MultiPointStreamGenerator(minGeometries, maxGeometries, seriesVar, multiGeometryGenAlgorithm, format, dateTimeFormat, initialTimeStamp, timeStep, timeGen, randomizeTimeInBatch);
-				break;
-			}
-			case "multiLineString": {
-				streamGenerator = new MultiLineStringStreamGenerator(minLineStringSegments, maxLineStringSegments, minGeometries, maxGeometries, seriesVar, multiGeometryGenAlgorithm, geometryGenAlgorithm, format,  dateTimeFormat, initialTimeStamp, timeStep, timeGen, randomizeTimeInBatch);
-				break;
-			}
-			case "multiPolygon": {
-				streamGenerator = new MultiPolygonStreamGenerator(minPolygonSides, maxPolygonSides, minGeometryHoles, maxGeometryHoles, minGeometries, maxGeometries, seriesVar, multiGeometryGenAlgorithm, geometryGenAlgorithm, format, dateTimeFormat, initialTimeStamp, timeStep, timeGen, randomizeTimeInBatch);
-				break;
-			}
-
 			case "networkPoint": {
 
 				if(interWorkersDataSharing.equalsIgnoreCase("broadcast")) {
@@ -246,7 +189,6 @@ public class StreamingJob implements Serializable {
 					streamGenerator = new NetworkPointStreamGenerator(network, format, mapFile, mapFileFormat, shortestPathAlgorithmStr, nodeMappingTolerance,
 							minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs,	trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs, interWorkersDataSharing, redisAddresses, redisServerType,
 							dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
-
 				}
 				break;
 			}
@@ -257,7 +199,7 @@ public class StreamingJob implements Serializable {
 		assert (streamGenerator != null) : "streamGenerator is null";
 
 		DataStream<String> geometryStream;
-		geometryStream = streamGenerator.generate(objIDStreamWithBatchID, seriesBBox, simpleDateFormat);
+		geometryStream = streamGenerator.generate(objIDStreamWithBatchID, simpleDateFormat);
 
 		switch (outputOption) {
 			case "kafka": {

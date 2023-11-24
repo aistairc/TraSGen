@@ -54,7 +54,6 @@ public class StreamingJob implements Serializable {
 		boolean onCluster = Params.clusterMode;
 		int parallelism = Params.parallelism;
 		String trajectoryType = Params.trajectoryType;
-		String datatypeOption = Params.datatypeOption;
 		String outputOption = Params.outputOption;
 		String outputTopicName = Params.outputTopicName;
 		String bootStrapServers = Params.bootStrapServers;
@@ -154,34 +153,26 @@ public class StreamingJob implements Serializable {
 
 		StreamGenerator streamGenerator = null;
 		Random timeGen = new Random();
-		switch (datatypeOption) {
-			case "networkPoint": {
-
-				if(interWorkersDataSharing.equalsIgnoreCase("broadcast")) {
-					// with broadcasting traffic congestion
-					if (sync) {
-						System.out.println("Broadcast interWorkersDataSharing option. Generating data in SYNC mode.");
-						streamGenerator = new NetworkPointStreamGeneratorSync1tuple(network, kafkaProperties, env, format, mapFile, mapFileFormat, shortestPathAlgorithmStr,
-								nodeMappingTolerance, minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs ,trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs, parallelism, Params.syncPercentage,
-								dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
-					}
-					else {
-						System.out.println("Broadcast interWorkersDataSharing option. Generating data in ASYNC mode.");
-						streamGenerator = new NetworkPointStreamGeneratorAsync(network, kafkaProperties, env, format, mapFile, mapFileFormat, shortestPathAlgorithmStr,
-								nodeMappingTolerance, minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs ,trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs,
-								dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
-					}
-
-				} else {
-					if(Params.interWorkersDataSharing.equalsIgnoreCase("redis")) {System.out.println("Redis interWorkersDataSharing option. Data sharing will be done using REDIS.");}
-					streamGenerator = new NetworkPointStreamGenerator(network, format, mapFile, mapFileFormat, shortestPathAlgorithmStr, nodeMappingTolerance,
-							minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs,	trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs, interWorkersDataSharing, redisAddresses, redisServerType,
-							dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
-				}
-				break;
+		if(interWorkersDataSharing.equalsIgnoreCase("broadcast")) {
+			// with broadcasting traffic congestion
+			if (sync) {
+				System.out.println("Broadcast interWorkersDataSharing option. Generating data in SYNC mode.");
+				streamGenerator = new NetworkPointStreamGeneratorSync1tuple(network, kafkaProperties, env, format, mapFile, mapFileFormat, shortestPathAlgorithmStr,
+						nodeMappingTolerance, minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs ,trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs, parallelism, Params.syncPercentage,
+						dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
 			}
-			default:
-				System.out.println("Unrecognized datatype option. Please input the appropriate datatype option.");
+			else {
+				System.out.println("Broadcast interWorkersDataSharing option. Generating data in ASYNC mode.");
+				streamGenerator = new NetworkPointStreamGeneratorAsync(network, kafkaProperties, env, format, mapFile, mapFileFormat, shortestPathAlgorithmStr,
+						nodeMappingTolerance, minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs ,trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs,
+						dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
+			}
+
+		} else {
+			if(Params.interWorkersDataSharing.equalsIgnoreCase("redis")) {System.out.println("Redis interWorkersDataSharing option. Data sharing will be done using REDIS.");}
+			streamGenerator = new NetworkPointStreamGenerator(network, format, mapFile, mapFileFormat, shortestPathAlgorithmStr, nodeMappingTolerance,
+					minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs,	trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs, interWorkersDataSharing, redisAddresses, redisServerType,
+					dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
 		}
 
 		assert (streamGenerator != null) : "streamGenerator is null";

@@ -72,7 +72,6 @@ public class Params {
 
 
     /* query */
-    public static String datatypeOption;
     public static CoordinateReferenceSystem coordinateReferenceSystem;
 
 
@@ -276,15 +275,6 @@ public class Params {
         }
 
         /* query */
-        try {
-            if ((datatypeOption = (String)config.getQuery().get("datatypeOption")) == null) {
-                throw new NullPointerException("datatype option is " + config.getQuery().get("datatypeOption"));
-            }
-        }
-        catch (ClassCastException e) {
-            throw new IllegalArgumentException("datatype option : " + e);
-        }
-
         try {
             String coordinateReferenceSystemStr;
             if ((coordinateReferenceSystemStr = (String)config.getQuery().get("coordinateReferenceSystem")) == null) {
@@ -566,7 +556,6 @@ public class Params {
                 "\nconsecutiveTrajTuplesIntervalMilliSec = " + consecutiveTrajTuplesIntervalMilliSec + ", " +
                 "\n" +
                 "trajectoryType = " + trajectoryType + ", " +
-                "datatypeOption = " + datatypeOption + ", " +
                 "\n" +
                 "mapFile = " + mapFile + ", " +
                 "mapFileFormat = " + mapFileFormat +

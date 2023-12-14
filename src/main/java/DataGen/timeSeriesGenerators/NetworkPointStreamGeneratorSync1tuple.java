@@ -106,7 +106,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
     }
 
     @Override
-    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream, SimpleDateFormat simpleDateFormat) {
+    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream) {
 
         //read edge information from Kafka topic Feedback
         DataStream<String> edgeTrafficCountString = this.env.addSource(new FlinkKafkaConsumer<>("Feedback", new SimpleStringSchema(), this.kafkaProperties));
@@ -271,15 +271,18 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 }
 
                 if (outputFormat.equals("GeoJSON")) {
-                    collector.collect(Serialization.generatePointJson(
-                            outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(), currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""), currentRoadTraffic, currentDisplacementPerUnitTime, HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
+                    if (dateFormat.equalsIgnoreCase("unix")) {
+                        collector.collect(Serialization.generatePointJson(
+                                outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(), currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""), currentRoadTraffic, currentDisplacementPerUnitTime, String.valueOf(System.currentTimeMillis())).toString());
+                    }else {
+                        collector.collect(Serialization.generatePointJson(
+                                outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(), currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""), currentRoadTraffic, currentDisplacementPerUnitTime, HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
 
+                    }
 
-//                        collector.collect(Serialization.generatePointJson(
-//                                outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(), currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""), currentRoadTraffic, currentDisplacementPerUnitTime, String.valueOf(System.currentTimeMillis())).toString());
                 } else {
                     collector.collect(Serialization.generateGeometryWKT(
-                            HelperClass.generatePoint(outputPointCoordinates), objID.f0, seqID.value(), simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))));
+                            HelperClass.generatePoint(outputPointCoordinates), objID.f0, seqID.value(), HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)));
                 }
                 // return for testing purpose
                 // return Serialization.generatePointJson( 10.0, 10.0, objID, simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString();

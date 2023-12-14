@@ -99,7 +99,7 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
 
 
     @Override
-    public DataStream<String> generate(DataStream<Tuple2<Integer, Long>> objIDStream, SimpleDateFormat simpleDateFormat) throws Exception {
+    public DataStream<String> generate(DataStream<Tuple2<Integer, Long>> objIDStream) throws Exception {
         return objIDStream
                 .keyBy(new HelperClass.objIDKeySelectorWithBatchID())
                 .flatMap(new NetworkRichFlatMapFunction<Coordinate>(Coordinate.class, networkDistribution, this.shortestIDPathMap, this.crs, this.displacementMetersPerSecond, this.interWorkersDataSharing, this.redisAddresses, this.redisServerType) {
@@ -211,17 +211,20 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
                         }
 
                         if (outputFormat.equals("GeoJSON")) {
+                                if (dateFormat.equalsIgnoreCase("unix")) {
+                                    collector.collect(Serialization.generatePointJson(
+                                outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(), String.valueOf(System.currentTimeMillis())).toString());
+                                }else {
+                                    collector.collect(Serialization.generatePointJson(
+                                            outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(), HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
+                                }
+
 //                                collector.collect(Serialization.generatePointJson(
 //                                        outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(), simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString());
 
-                            collector.collect(Serialization.generatePointJson(
-                                    outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(),  HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
-
-
-
                         } else {
                             collector.collect(Serialization.generateGeometryWKT(
-                                    HelperClass.generatePoint(outputPointCoordinates), objID, seqID.value(), simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))));
+                                    HelperClass.generatePoint(outputPointCoordinates), objID, seqID.value(), HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)));
                         }
                         // return for testing purpose
                         // return Serialization.generatePointJson( 10.0, 10.0, objID, simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString();

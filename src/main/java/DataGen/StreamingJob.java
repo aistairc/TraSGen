@@ -86,7 +86,6 @@ public class StreamingJob implements Serializable {
 		String dateTimeFormat = Params.dateFormat;
 		String initialTimeStamp = Params.initialTimeStamp;
 		int timeStep = 	Params.timeStep;
-		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateTimeFormat);
 
 		String mapFile = Params.mapFile;
 		String mapFileFormat = Params.mapFileFormat;
@@ -178,7 +177,7 @@ public class StreamingJob implements Serializable {
 		assert (streamGenerator != null) : "streamGenerator is null";
 
 		DataStream<String> geometryStream;
-		geometryStream = streamGenerator.generate(objIDStreamWithBatchID, simpleDateFormat);
+		geometryStream = streamGenerator.generate(objIDStreamWithBatchID);
 
 		switch (outputOption) {
 			case "kafka": {

@@ -124,10 +124,9 @@ public class GeoJSONMapToGraph implements Serializable {
         this.bufferedConvexHull = (Polygon) convexHull.buffer(0.05);
 
         // Output Convex Hull to GeoJson (for visualising in QGIS)
-        String dateTimeFormat = Params.dateFormat;
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateTimeFormat);
-        List<List<Coordinate>> nested = Arrays.asList(Arrays.asList(convexHull.getCoordinates()));
-        JSONObject json = generatePolygonJson(nested, 1, simpleDateFormat.format(HelperClass.localDateTimeToDate(LocalDateTime.now())));
+//        String dateTimeFormat = Params.dateFormat;
+//        List<List<Coordinate>> nested = Arrays.asList(Arrays.asList(convexHull.getCoordinates()));
+//        JSONObject json = generatePolygonJson(nested, 1,HelperClass.TimeStamp(Params.dateFormat, Params.initialTimeStamp, 0, 0L, null, false));
 
 
 

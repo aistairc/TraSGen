@@ -35,6 +35,6 @@ public interface StreamGenerator extends Serializable {
 ////        public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream, Envelope seriesBBox, SimpleDateFormat simpleDateFormat) throws Exception;
 
 
-    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream, SimpleDateFormat simpleDateFormat) throws Exception;
+    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream) throws Exception;
 
 }

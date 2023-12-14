@@ -211,20 +211,17 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
                         }
 
                         if (outputFormat.equals("GeoJSON")) {
-                                if (dateFormat.equalsIgnoreCase("unix")) {
-                                    collector.collect(Serialization.generatePointJson(
-                                outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(), String.valueOf(System.currentTimeMillis())).toString());
-                                }else {
-                                    collector.collect(Serialization.generatePointJson(
-                                            outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(), HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
-                                }
+                            collector.collect(Serialization.generatePointJson(
+                                            outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(),
+                                            HelperClass.TimeStamp(dateFormat, initialTimeStamp,
+                                            timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
 
-//                                collector.collect(Serialization.generatePointJson(
-//                                        outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(), simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString());
 
                         } else {
                             collector.collect(Serialization.generateGeometryWKT(
-                                    HelperClass.generatePoint(outputPointCoordinates), objID, seqID.value(), HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)));
+                                    HelperClass.generatePoint(outputPointCoordinates), objID, seqID.value(),
+                                    HelperClass.TimeStamp(dateFormat, initialTimeStamp,
+                                    timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)));
                         }
                         // return for testing purpose
                         // return Serialization.generatePointJson( 10.0, 10.0, objID, simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString();

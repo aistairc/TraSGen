@@ -262,16 +262,42 @@ public class HelperClass {
     }
 
     public static String TimeStamp( String dateFormat, String initialTimeStamp, int timeStepinMilliSec, Long batchID, Random timeGen, boolean randomizeTimeInBatch) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
-        LocalDateTime ldt = LocalDateTime.parse(initialTimeStamp, formatter);
-        ldt = ldt.plus(timeStepinMilliSec * (batchID-1L), ChronoUnit.MILLIS);
+        Long timeStamp = 0L;
 
-        if (randomizeTimeInBatch) {
-            int randomVariation =  timeGen.nextInt(timeStepinMilliSec + 1);
-            ldt = ldt.plus(randomVariation, ChronoUnit.MILLIS);
+        if (dateFormat.equalsIgnoreCase("unix")) {
+            if (initialTimeStamp.equalsIgnoreCase("system")) {
+                timeStamp = System.currentTimeMillis();
+                return timeStamp.toString();
+            }
+
+            timeStamp =  Long.parseLong(initialTimeStamp) + (timeStepinMilliSec * (batchID-1L));
+
+            if (randomizeTimeInBatch) {
+                int randomVariationInMilliSeconds = timeGen.nextInt(timeStepinMilliSec);
+                timeStamp = timeStamp + randomVariationInMilliSeconds;
+            }
+
+            return timeStamp.toString();
+
         }
+        else {
+            ZoneId zone = ZoneId.systemDefault();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat).withZone(zone);
+            if (initialTimeStamp.equalsIgnoreCase("system")) {
+                Instant time = Instant.ofEpochMilli(System.currentTimeMillis());
+                return formatter.format(time);
+            }
 
-        return DateTimeFormatter.ofPattern(dateFormat).format(ldt);
+            LocalDateTime ldt = LocalDateTime.parse(initialTimeStamp, formatter);
+            ldt = ldt.plus(timeStepinMilliSec * (batchID - 1L), ChronoUnit.MILLIS);
+
+            if (randomizeTimeInBatch) {
+                int randomVariationInMilliSeconds = timeGen.nextInt(timeStepinMilliSec); //generate random int from 0 to timeStepinMilliSec (exclusive)
+                ldt = ldt.plus(randomVariationInMilliSeconds, ChronoUnit.MILLIS); // add that int to the timeStamp
+            }
+
+            return formatter.format(ldt);
+        }
     }
 
 

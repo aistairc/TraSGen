@@ -23,17 +23,18 @@ output:
 
   # data
   data:
-#    dateFormat: "yyyy-MM-dd HH:mm:ss"
     dateFormat: "unix"
-    initialTimeStamp: "2000-04-19 12:00:00"
+    initialTimeStamp: "956145600000" # in milliseconds (TimeZone - GMT)
+#    dateFormat: "yyyy-MM-dd HH:mm:ss"
+#    initialTimeStamp: "2000-04-19 12:00:00"  # (TimeZone - GMT)
     timeStep: 5000             #in milliseconds
     randomizeTimeInBatch: false
     # numberOfTrajectories at any time instant. Time stream object IDs are generated in the following range
     objIDRange: [1, 1]  # Upper bound inclusive
     # Set nRows to -1 for infinite number of rows
-    nRows: -1
+    nRows: 5
     # consecutive Traj Tuples Generation Interval in seconds. 0 for no interval (max throughput)
-    consecutiveTrajTuplesIntervalMilliSec: 5000
+    consecutiveTrajTuplesIntervalMilliSec: 0
 
 # Query parameters
 query:

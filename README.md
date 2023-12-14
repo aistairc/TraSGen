@@ -59,15 +59,15 @@ Output sink type and format for the generated trajectories.
 
 -   **data:** Properties of the output trajectory stream.
 
-| Name        | dateFormat                                                    |
-|------------|------------------------------------------------------------|
-| Value       | \"yyyy-MM-dd HH:mm:ss\" and variations                        |
-| Description | Output format for the timestamp of each trajectory data point |
+| Name        | dateFormat                                                                                                          |
+|------------|---------------------------------------------------------------------------------------------------------------------|
+| Value       | \"yyyy-MM-dd HH:mm:ss\" and variations, "unix"                                                                      |
+| Description | Output format for the timestamp of each trajectory data point. If "unix",timeStamps will be in Epoch/UNIX GMT time. |
 
-| Name        | initialTimeStamp                                               |
-|------------|------------------------------------------------------------|
-| Value       | Any timestamp provided in the format defined by \"dateFormat\" |
-| Description | Starting timestamp of the first point in the trajectories      |
+| Name        | initialTimeStamp                                                                                                         |
+|------------|--------------------------------------------------------------------------------------------------------------------------|
+| Value       | Any timestamp provided in the format defined by "dateFormat", <br/>"system"                                              |
+| Description | Starting timestamp of the first point in the trajectories. If "system" then the current time is used for all timestamps. |
 
 | Name        | timeStep                                                                                                                                                                                                                                                                                                 |
 |------------|------------------------------------------------------------|

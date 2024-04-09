@@ -39,6 +39,8 @@ public class IntegerStreamBroadcast {
 
     private  long countRows = 0;
 
+    private int consecutiveTrajTuplesIntervalMilliSec;
+
     StreamExecutionEnvironment env;
     private Properties kafkaProperties = null;
     private long count = 0L;
@@ -51,12 +53,13 @@ public class IntegerStreamBroadcast {
     private Integer objID;
 
     //TODO Only supports roundrobin, expand to random
-    public IntegerStreamBroadcast(StreamExecutionEnvironment env, int minObjID, int maxObjID, long numRows, Properties kafkaProperties) {
+    public IntegerStreamBroadcast(StreamExecutionEnvironment env, int minObjID, int maxObjID, long numRows, int consecutiveTrajTuplesIntervalMilliSec,Properties kafkaProperties) {
         this.minObjID = minObjID;
         this.maxObjID = maxObjID;
         this.numRows = numRows;
         this.env = env;
         this.kafkaProperties = kafkaProperties;
+        this.consecutiveTrajTuplesIntervalMilliSec = consecutiveTrajTuplesIntervalMilliSec;
         this.totalObjIDs =  maxObjID - minObjID + 1;
 //
         for(int i = minObjID ; i < totalObjIDs + 1 ; i++)
@@ -99,7 +102,7 @@ public class IntegerStreamBroadcast {
         });
 //        controlTuples.print();
 
-        DataStream<Tuple2<Integer,Long>> objIDs = controlTuples.flatMap(new IntStreamBroadcastManager1tuple(countRows, numRows, parallelism, objIDrange, currentTrajIDs, batchID, syncPercentage)).setParallelism(1).name("oID Generator");
+        DataStream<Tuple2<Integer,Long>> objIDs = controlTuples.flatMap(new IntStreamBroadcastManager1tuple(countRows, numRows, parallelism, objIDrange, currentTrajIDs, batchID, syncPercentage, consecutiveTrajTuplesIntervalMilliSec)).setParallelism(1).name("oID Generator");
 //
         return intializeObjIDStream.union(objIDs);
     }

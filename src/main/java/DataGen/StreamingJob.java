@@ -38,7 +38,6 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
@@ -60,6 +59,8 @@ public class StreamingJob implements Serializable {
 
 		String redisAddresses = Params.redisAddresses;
 		String redisServerType = Params.redisServerType;
+
+		int consecutiveTrajTuplesIntervalMilliSec = Params.consecutiveTrajTuplesIntervalMilliSec;
 
 
 		String format = Params.outputFormat;
@@ -129,7 +130,7 @@ public class StreamingJob implements Serializable {
 			objIDStreamWithBatchID = integerStream.generateRoundRobinWithBatchID();
 		}
 		else if(interWorkersDataSharing.equalsIgnoreCase("broadcast") && sync) {
-			IntegerStreamBroadcast integerStreamBroadcast = new IntegerStreamBroadcast(env, minObjID, maxObjID, numRows, kafkaProperties);
+			IntegerStreamBroadcast integerStreamBroadcast = new IntegerStreamBroadcast(env, minObjID, maxObjID, numRows, consecutiveTrajTuplesIntervalMilliSec, kafkaProperties);
 			objIDStreamWithBatchID = integerStreamBroadcast.generateRoundRobin();
 
 		}

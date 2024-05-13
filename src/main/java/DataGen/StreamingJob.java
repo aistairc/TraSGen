@@ -25,6 +25,7 @@ import DataGen.utils.IntegerStreamBroadcast;
 import DataGen.utils.Serialization;
 import org.apache.flink.api.common.serialization.SimpleStringEncoder;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
@@ -125,7 +126,7 @@ public class StreamingJob implements Serializable {
 
 		IntegerStream integerStream = new IntegerStream(env, minObjID, maxObjID, numRows);
 
-		DataStream<Tuple2<Integer,Long>> objIDStreamWithBatchID = null;
+		DataStream<Tuple3<Integer,Long, Long>> objIDStreamWithBatchID = null;
 		if (!(interWorkersDataSharing.equalsIgnoreCase("broadcast") && sync)) {
 			objIDStreamWithBatchID = integerStream.generateRoundRobinWithBatchID();
 		}
@@ -159,20 +160,20 @@ public class StreamingJob implements Serializable {
 				System.out.println("Broadcast interWorkersDataSharing option. Generating data in SYNC mode.");
 				streamGenerator = new NetworkPointStreamGeneratorSync1tuple(network, kafkaProperties, env, format, mapFile, mapFileFormat, shortestPathAlgorithmStr,
 						nodeMappingTolerance, minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs ,trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs, parallelism, Params.syncPercentage,
-						dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
+						dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch, consecutiveTrajTuplesIntervalMilliSec);
 			}
 			else {
 				System.out.println("Broadcast interWorkersDataSharing option. Generating data in ASYNC mode.");
 				streamGenerator = new NetworkPointStreamGeneratorAsync(network, kafkaProperties, env, format, mapFile, mapFileFormat, shortestPathAlgorithmStr,
 						nodeMappingTolerance, minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs ,trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs,
-						dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
+						dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch, consecutiveTrajTuplesIntervalMilliSec);
 			}
 
 		} else {
 			if(Params.interWorkersDataSharing.equalsIgnoreCase("redis")) {System.out.println("Redis interWorkersDataSharing option. Data sharing will be done using REDIS.");}
 			streamGenerator = new NetworkPointStreamGenerator(network, format, mapFile, mapFileFormat, shortestPathAlgorithmStr, nodeMappingTolerance,
 					minObjID, maxObjID, trajStartEndSelectionApproach, trajStartEndCoordinatePairs,	trajStartPolygons, trajEndPolygons, displacementMetersPerSecond, crs, interWorkersDataSharing, redisAddresses, redisServerType,
-					dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch);
+					dateTimeFormat, initialTimeStamp, timeStep, randomizeTimeInBatch, consecutiveTrajTuplesIntervalMilliSec);
 		}
 
 		assert (streamGenerator != null) : "streamGenerator is null";

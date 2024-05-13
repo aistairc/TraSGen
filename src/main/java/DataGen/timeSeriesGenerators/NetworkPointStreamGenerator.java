@@ -22,6 +22,7 @@ import DataGen.utils.NetworkPath;
 import DataGen.utils.Serialization;
 import DataGen.utils.SpatialFunctions;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
@@ -62,13 +63,15 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
     private String dateFormat = null;
 
     private int timeStepinMilliSec = 0;
-    boolean randomizeTimeInBatch;
+    private boolean randomizeTimeInBatch;
+
+    private int consecutiveTrajTuplesIntervalMilliSec;
 
     public NetworkPointStreamGenerator(NetworkDistribution networkDistribution, String outputFormat, String mapFile, String mapFileFormat,
                                        String shortestPathAlgorithmStr, Double nodeMappingTolerance, int minObjID, int maxObjID,
                                        String trajStartEndSelectionApproach, List<List<Double>> trajStartEndCoordinatePairs,
                                        List<List<Double>> trajStartPolygons, List<List<Double>> trajEndPolygons, double displacementMetersPerSecond, CoordinateReferenceSystem crs, String interWorkersDataSharing,
-                                       String redisAddresses, String redisServerType, String dateFormat, String initialTimeStamp, int timeStepinMilliSec, boolean randomizeTimeInBatch){
+                                       String redisAddresses, String redisServerType, String dateFormat, String initialTimeStamp, int timeStepinMilliSec, boolean randomizeTimeInBatch, int consecutiveTrajTuplesIntervalMilliSec){
 
         this.networkDistribution = networkDistribution;
         this.outputFormat = outputFormat;
@@ -93,21 +96,23 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
         this.timeStepinMilliSec = timeStepinMilliSec;
         this.dateFormat = dateFormat;
         this.randomizeTimeInBatch = randomizeTimeInBatch;
+        this.consecutiveTrajTuplesIntervalMilliSec = consecutiveTrajTuplesIntervalMilliSec;
 
         if(this.interWorkersDataSharing.equalsIgnoreCase("redis")) {System.out.println("Redis interWorkersDataSharing option. Data sharing will be done using Redis.");}
     }
 
 
     @Override
-    public DataStream<String> generate(DataStream<Tuple2<Integer, Long>> objIDStream) throws Exception {
+    public DataStream<String> generate(DataStream<Tuple3<Integer, Long, Long>> objIDStream) throws Exception {
         return objIDStream
                 .keyBy(new HelperClass.objIDKeySelectorWithBatchID())
                 .flatMap(new NetworkRichFlatMapFunction<Coordinate>(Coordinate.class, networkDistribution, this.shortestIDPathMap, this.crs, this.displacementMetersPerSecond, this.interWorkersDataSharing, this.redisAddresses, this.redisServerType) {
 
                     @Override
-                    public void flatMap(Tuple2<Integer, Long> objIDTuple, Collector<String> collector) throws Exception {
+                    public void flatMap(Tuple3<Integer, Long, Long> objIDTuple, Collector<String> collector) throws Exception {
                         Integer objID = objIDTuple.f0;
                         Long batchID = objIDTuple.f1;
+                        Long firstTimeStamp = objIDTuple.f2;
 
                         //System.out.println("getNumberOfParallelSubtasks " + getRuntimeContext().getNumberOfParallelSubtasks());
                         //System.out.println("getIndexOfThisSubtask " + getRuntimeContext().getIndexOfThisSubtask());
@@ -209,6 +214,9 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
                             lastGeometryVState.update(edgeSourceCoordinates);
                             lastAzimuthVState.update(edgeAzimuth);
                         }
+
+                        while ((System.nanoTime() - firstTimeStamp)/1E6 < consecutiveTrajTuplesIntervalMilliSec) {}
+
 
                         if (outputFormat.equals("GeoJSON")) {
                             collector.collect(Serialization.generatePointJson(

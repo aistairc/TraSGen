@@ -17,6 +17,7 @@
 package DataGen.timeSeriesGenerators;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.locationtech.jts.geom.Envelope;
 
@@ -35,6 +36,6 @@ public interface StreamGenerator extends Serializable {
 ////        public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream, Envelope seriesBBox, SimpleDateFormat simpleDateFormat) throws Exception;
 
 
-    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream) throws Exception;
+    public DataStream<String> generate(DataStream<Tuple3<Integer,Long, Long>> objIDStream) throws Exception;
 
 }

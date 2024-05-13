@@ -20,6 +20,7 @@ import DataGen.inputParameters.Params;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple6;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -48,7 +49,7 @@ public class IntegerStreamBroadcast {
 
     private int totalObjIDs;
     private long batchID = 1;
-    private  HashSet<Tuple2<Integer,Long>> initializerBatch = new LinkedHashSet<Tuple2<Integer,Long>>();
+    private  HashSet<Tuple3<Integer,Long, Long>> initializerBatch = new LinkedHashSet<Tuple3<Integer,Long,Long>>();
 
     private Integer objID;
 
@@ -73,18 +74,18 @@ public class IntegerStreamBroadcast {
 
         //create batchID tuples
         for(int ID : currentTrajIDs) {
-            this.initializerBatch.add(Tuple2.of(ID,batchID));
+            this.initializerBatch.add(Tuple3.of(ID,batchID, System.nanoTime()));
         }
 
     }
 
-    public DataStream<Tuple2<Integer,Long>> generateRoundRobin() throws Exception {
+    public DataStream<Tuple3<Integer,Long, Long>> generateRoundRobin() throws Exception {
         //TODO convert to Integer object ID to long, set parallelism accordingly
 
         int parallelism = Params.parallelism;
         double syncPercentage = Params.syncPercentage;
 
-        DataStream<Tuple2<Integer,Long>> intializeObjIDStream = this.env.fromCollection(initializerBatch).name("oID Generator Initializer");;
+        DataStream<Tuple3<Integer,Long, Long>> intializeObjIDStream = this.env.fromCollection(initializerBatch).name("oID Generator Initializer");;
 
 
         DataStream<String> controlTupleString = this.env.addSource(new FlinkKafkaConsumer<>("BroadcastStateUpdate", new SimpleStringSchema(), this.kafkaProperties)).name("Control Tuples Source");
@@ -102,7 +103,7 @@ public class IntegerStreamBroadcast {
         });
 //        controlTuples.print();
 
-        DataStream<Tuple2<Integer,Long>> objIDs = controlTuples.flatMap(new IntStreamBroadcastManager1tuple(countRows, numRows, parallelism, objIDrange, currentTrajIDs, batchID, syncPercentage, consecutiveTrajTuplesIntervalMilliSec)).setParallelism(1).name("oID Generator");
+        DataStream<Tuple3<Integer,Long, Long>> objIDs = controlTuples.flatMap(new IntStreamBroadcastManager1tuple(countRows, numRows, parallelism, objIDrange, currentTrajIDs, batchID, syncPercentage, consecutiveTrajTuplesIntervalMilliSec)).setParallelism(1).name("oID Generator");
 //
         return intializeObjIDStream.union(objIDs);
     }

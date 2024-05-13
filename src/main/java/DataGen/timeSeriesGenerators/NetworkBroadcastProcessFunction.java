@@ -39,7 +39,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import java.util.Map;
 import java.util.Random;
 
-public abstract class NetworkBroadcastProcessFunction<G> extends KeyedBroadcastProcessFunction<Integer, Tuple2<Integer,Long>, Tuple4<String, Integer, String, Integer>, String> {
+public abstract class NetworkBroadcastProcessFunction<G> extends KeyedBroadcastProcessFunction<Integer, Tuple3<Integer,Long, Long>, Tuple4<String, Integer, String, Integer>, String> {
 
 
     final Class<G> typeParameterClass;

@@ -18,6 +18,7 @@ package DataGen.utils;
 
 import DataGen.inputParameters.Params;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 public class IntegerStream {
@@ -70,11 +71,11 @@ public class IntegerStream {
                      if(objIDCounter >= totalObjIDs){
                          objIDCounter = 0;
                          // loop to add pause in data generation
-                         long endTime;
-                         do{
-                             endTime = System.nanoTime();
-                         }while((endTime - startTime)/1E6 < this.consecutiveTrajTuplesIntervalMilliSec);
-                         startTime = System.nanoTime();
+//                         long endTime;
+//                         do{
+//                             endTime = System.nanoTime();
+//                         }while((endTime - startTime)/1E6 < this.consecutiveTrajTuplesIntervalMilliSec);
+//                         startTime = System.nanoTime();
 
                          //if(!startTimeUpdated) {
                          //    startTime = System.nanoTime();
@@ -93,14 +94,14 @@ public class IntegerStream {
     }
 
 
-    public DataStream<Tuple2<Integer, Long>> generateRoundRobinWithBatchID(){
+    public DataStream<Tuple3<Integer, Long, Long>> generateRoundRobinWithBatchID(){
         // "vehicle" // Round Robin Data Generation
-        return env.addSource(new IntStreamSourceFunction<Tuple2<Integer, Long>>(this.minObjID, this.maxObjID, this.numRows, Params.consecutiveTrajTuplesIntervalMilliSec) {
+        return env.addSource(new IntStreamSourceFunction<Tuple3<Integer, Long, Long>>(this.minObjID, this.maxObjID, this.numRows, Params.consecutiveTrajTuplesIntervalMilliSec) {
             private long count = 0L;
             private long batchID = 1L;
             private int networkObjID = minObjID;
             @Override
-            public void run(SourceContext<Tuple2<Integer, Long>> sourceContext) throws Exception {
+            public void run(SourceContext<Tuple3<Integer, Long, Long>> sourceContext) throws Exception {
 
                 int totalObjIDs =  maxObjID - minObjID + 1;
                 int objIDCounter = 0;
@@ -115,7 +116,7 @@ public class IntegerStream {
                         networkObjID = minObjID;
 
                     }
-                    sourceContext.collect(Tuple2.of(x, batchID));
+                    sourceContext.collect(Tuple3.of(x, batchID, System.nanoTime()));
                     objIDCounter++;
 
                     //System.out.println("x, objIDCounter: " + x + ", " + objIDCounter);

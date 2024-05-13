@@ -23,10 +23,7 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple4;
-import org.apache.flink.api.java.tuple.Tuple8;
-import org.apache.flink.api.java.tuple.Tuple9;
+import org.apache.flink.api.java.tuple.*;
 import org.apache.flink.api.java.typeutils.GenericTypeInfo;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
@@ -41,7 +38,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 
-public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends KeyedBroadcastProcessFunction<Integer, Tuple2<Integer,Long>, Tuple9<String, Integer, String, Integer, Long, Long, Integer,Integer, Long>, String> {
+public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends KeyedBroadcastProcessFunction<Integer, Tuple3<Integer,Long, Long>, Tuple9<String, Integer, String, Integer, Long, Long, Integer,Integer, Long>, String> {
     final Class<G> typeParameterClass;
     protected ValueState<Integer> currentEdgeIndexVState = null;
     protected ValueState<Double> lastAzimuthVState = null;

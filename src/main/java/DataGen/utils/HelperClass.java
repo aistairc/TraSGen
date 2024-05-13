@@ -18,6 +18,7 @@ package DataGen.utils;
 
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.shaded.akka.org.jboss.netty.util.internal.ThreadLocalRandom;
 import org.geotools.referencing.GeodeticCalculator;
 import org.locationtech.jts.geom.*;
@@ -33,7 +34,7 @@ import java.util.*;
 
 public class HelperClass {
 
-    private static Random generator = new Random();
+    private static Random generator = new Random(123);
 
     // Methods
     //Generate Random XY coordinate
@@ -100,7 +101,9 @@ public class HelperClass {
             return minRange;
         }
         else {
-            return minRange + ThreadLocalRandom.current().nextInt(maxRange - minRange);
+            return minRange + generator.nextInt(maxRange - minRange);
+
+//            return minRange + ThreadLocalRandom.current().nextInt(maxRange - minRange);
         }
         //return minRange + (int)Math.random() * (maxRange - minRange);
     }
@@ -135,9 +138,9 @@ public class HelperClass {
         }
     }
 
-    public static class objIDKeySelectorWithBatchID implements KeySelector<Tuple2<Integer,Long>, Integer> {
+    public static class objIDKeySelectorWithBatchID implements KeySelector<Tuple3<Integer,Long, Long>, Integer> {
         @Override
-        public Integer getKey(Tuple2<Integer,Long> objID) throws Exception {
+        public Integer getKey(Tuple3<Integer,Long, Long> objID) throws Exception {
             return objID.f0;
         }
     }

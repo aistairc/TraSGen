@@ -73,13 +73,14 @@ public class NetworkPointStreamGeneratorAsync implements StreamGenerator, Serial
 
     private int timeStepinMilliSec = 0;
     boolean randomizeTimeInBatch;
+    private int consecutiveTrajTuplesIntervalMilliSec = 0;
 
 
     public NetworkPointStreamGeneratorAsync(NetworkDistribution networkDistribution, Properties kafkaProperties, StreamExecutionEnvironment env, String outputFormat,
                                             String mapFile, String mapFileFormat, String shortestPathAlgorithmStr, Double nodeMappingTolerance,
                                             int minObjID, int maxObjID, String trajStartEndSelectionApproach, List<List<Double>> trajStartEndCoordinatePairs,
                                             List<List<Double>> trajStartPolygons, List<List<Double>> trajEndPolygons, double displacementMetersPerSecond, CoordinateReferenceSystem crs,
-                                            String dateFormat, String initialTimeStamp, int timeStepinMilliSec, boolean randomizeTimeInBatch){
+                                            String dateFormat, String initialTimeStamp, int timeStepinMilliSec, boolean randomizeTimeInBatch, int consecutiveTrajTuplesIntervalMilliSec){
 
         this.networkDistribution = networkDistribution;
         this.outputFormat = outputFormat;
@@ -100,11 +101,12 @@ public class NetworkPointStreamGeneratorAsync implements StreamGenerator, Serial
         this.timeStepinMilliSec = timeStepinMilliSec;
         this.dateFormat = dateFormat;
         this.randomizeTimeInBatch = randomizeTimeInBatch;
+        this.consecutiveTrajTuplesIntervalMilliSec = consecutiveTrajTuplesIntervalMilliSec;
     }
 
 
     @Override
-    public DataStream<String> generate(DataStream<Tuple2<Integer, Long>> objIDStream) {
+    public DataStream<String> generate(DataStream<Tuple3<Integer, Long, Long>> objIDStream) {
 
         //read edge information from Kafka topic Feedback
         DataStream<String> edgeTrafficCountString = this.env.addSource(new FlinkKafkaConsumer<>("Feedback", new SimpleStringSchema(), this.kafkaProperties)).name("Traffic Information Source");
@@ -117,7 +119,7 @@ public class NetworkPointStreamGeneratorAsync implements StreamGenerator, Serial
             }
         });
 
-        KeyedStream<Tuple2<Integer,Long>, Integer> keyedobjIDStream = objIDStream.keyBy(new HelperClass.objIDKeySelectorWithBatchID());
+        KeyedStream<Tuple3<Integer,Long, Long>, Integer> keyedobjIDStream = objIDStream.keyBy(new HelperClass.objIDKeySelectorWithBatchID());
 
         MapStateDescriptor<String,Tuple3<Integer, String, Integer>> broadcastStateDescriptor =
                 new MapStateDescriptor<>("edgeTrafficMap", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Integer.class, String.class,Integer.class));
@@ -130,10 +132,11 @@ public class NetworkPointStreamGeneratorAsync implements StreamGenerator, Serial
         SingleOutputStreamOperator<String> networkPoints = keyedobjIDStream.connect(broadcastTrafficMap).process(new NetworkBroadcastProcessFunction<Coordinate>(Coordinate.class, networkDistribution, this.shortestIDPathMap, this.crs, this.displacementMetersPerSecond) {
 
             @Override
-            public void processElement(Tuple2<Integer, Long> objIDTuple,  ReadOnlyContext ctx, Collector<String> collector) throws Exception {
+            public void processElement(Tuple3<Integer, Long, Long> objIDTuple,  ReadOnlyContext ctx, Collector<String> collector) throws Exception {
 
                 Integer objID = objIDTuple.f0;
                 Long batchID = objIDTuple.f1;
+                Long firstTimeStamp = objIDTuple.f2;
 
                 LocalDateTime localDateTime = LocalDateTime.now();
 
@@ -241,6 +244,9 @@ public class NetworkPointStreamGeneratorAsync implements StreamGenerator, Serial
                     lastGeometryVState.update(edgeSourceCoordinates);
                     lastAzimuthVState.update(edgeAzimuth);
                 }
+
+                while ((System.nanoTime() - firstTimeStamp)/1E6  < consecutiveTrajTuplesIntervalMilliSec) {}
+
 
                 if (outputFormat.equals("GeoJSON")) {
                         collector.collect(Serialization.generatePointJson(

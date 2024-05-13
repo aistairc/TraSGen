@@ -25,6 +25,7 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.typeutils.GenericTypeInfo;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
 import org.apache.flink.configuration.Configuration;
@@ -37,7 +38,7 @@ import org.redisson.api.RedissonClient;
 import java.util.Map;
 import java.util.Random;
 
-public abstract class NetworkRichFlatMapFunction<G> extends RichFlatMapFunction<Tuple2<Integer, Long>, String> {
+public abstract class NetworkRichFlatMapFunction<G> extends RichFlatMapFunction<Tuple3<Integer, Long, Long>, String> {
 
     final Class<G> typeParameterClass;
     protected ValueState<Integer> currentEdgeIndexVState = null;

@@ -18,6 +18,7 @@ package DataGen.utils;
 
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple6;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
@@ -27,7 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class IntStreamBroadcastManager1tuple extends RichFlatMapFunction<Tuple6<String, Long, Long, Long, Long, Set<Integer>>, Tuple2<Integer,Long>> implements Serializable {
+public class IntStreamBroadcastManager1tuple extends RichFlatMapFunction<Tuple6<String, Long, Long, Long, Long, Set<Integer>>, Tuple3<Integer,Long, Long>> implements Serializable {
 
 
     private  long countRows;
@@ -61,7 +62,7 @@ public class IntStreamBroadcastManager1tuple extends RichFlatMapFunction<Tuple6<
     }
 
     @Override
-    public void flatMap(Tuple6<String, Long, Long, Long, Long, Set<Integer>> controlTuple, Collector<Tuple2<Integer,Long>> out) throws Exception {
+    public void flatMap(Tuple6<String, Long, Long, Long, Long, Set<Integer>> controlTuple, Collector<Tuple3<Integer, Long, Long>> out) throws Exception {
 
         //      0                1                 2               3             4            5
         // "syncState", expectedBatchCount, totalBatchCount, currBatchCount, currbatchID, removeIDList
@@ -96,18 +97,18 @@ public class IntStreamBroadcastManager1tuple extends RichFlatMapFunction<Tuple6<
             receivedControlTuples = 0;
             batchID++;
 
-            long startTime = System.nanoTime();
-            long endTime;
-            do{
-                endTime = System.nanoTime();
-            }while((endTime - startTime)/1E6 < this.consecutiveTrajTuplesIntervalMilliSec);
+//            long startTime = System.nanoTime();
+//            long endTime;
+//            do{
+//                endTime = System.nanoTime();
+//            }while((endTime - startTime)/1E6 < this.consecutiveTrajTuplesIntervalMilliSec);
 
             // generate objIDs
             for (int ID : objIDrange) {
                 if ((numRows != -1) && (countRows >= numRows)) {
                     break;
                 }
-                out.collect(Tuple2.of(ID, batchID));
+                out.collect(Tuple3.of(ID, batchID, System.nanoTime()));
                 countRows++;
             }
 

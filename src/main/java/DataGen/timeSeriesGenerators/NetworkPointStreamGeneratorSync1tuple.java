@@ -68,6 +68,8 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
     private String dateFormat = null;
 
     private int timeStepinMilliSec = 0;
+
+    private int consecutiveTrajTuplesIntervalMilliSec = 0;
     boolean randomizeTimeInBatch;
 
 
@@ -76,7 +78,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                                                  String mapFile, String mapFileFormat, String shortestPathAlgorithmStr, Double nodeMappingTolerance,
                                                  int minObjID, int maxObjID, String trajStartEndSelectionApproach, List<List<Double>> trajStartEndCoordinatePairs,
                                                  List<List<Double>> trajStartPolygons, List<List<Double>> trajEndPolygons, double displacementMetersPerSecond, CoordinateReferenceSystem crs,
-                                                 int parallelism,  double syncPercentage, String dateFormat, String initialTimeStamp, int timeStepinMilliSec, boolean randomizeTimeInBatch){
+                                                 int parallelism,  double syncPercentage, String dateFormat, String initialTimeStamp, int timeStepinMilliSec, boolean randomizeTimeInBatch, int consecutiveTrajTuplesIntervalMilliSec){
 
 
         this.networkDistribution = networkDistribution;
@@ -99,6 +101,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
         this.timeStepinMilliSec = timeStepinMilliSec;
         this.dateFormat = dateFormat;
         this.randomizeTimeInBatch = randomizeTimeInBatch;
+        this.consecutiveTrajTuplesIntervalMilliSec =  consecutiveTrajTuplesIntervalMilliSec;
 
         int totalObjIDs =  maxObjID - minObjID + 1;
         for(int i = minObjID ; i < totalObjIDs + 1 ; i++)
@@ -106,7 +109,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
     }
 
     @Override
-    public DataStream<String> generate(DataStream<Tuple2<Integer,Long>> objIDStream) {
+    public DataStream<String> generate(DataStream<Tuple3<Integer,Long, Long>> objIDStream) {
 
         //read edge information from Kafka topic Feedback
         DataStream<String> edgeTrafficCountString = this.env.addSource(new FlinkKafkaConsumer<>("Feedback", new SimpleStringSchema(), this.kafkaProperties));
@@ -121,7 +124,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
             }
         });
 
-        KeyedStream<Tuple2<Integer,Long>, Integer> keyedobjIDStream = objIDStream.keyBy(new HelperClass.objIDKeySelectorWithBatchID());
+        KeyedStream<Tuple3<Integer,Long, Long>, Integer> keyedobjIDStream = objIDStream.keyBy(new HelperClass.objIDKeySelectorWithBatchID());
 
         MapStateDescriptor<String,Tuple3<Integer, Long, Integer>> broadcastStateDescriptor =
                 new MapStateDescriptor<>("edgeTrafficMap", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Integer.class, Long.class,Integer.class));
@@ -141,7 +144,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
         SingleOutputStreamOperator<String> networkPoints = keyedobjIDStream.connect(broadcastTrafficMap).process(new NetworkBroadcastProcessFunctionSync1tuple<Coordinate>(Coordinate.class, networkDistribution, this.shortestIDPathMap, this.crs, this.displacementMetersPerSecond, this.random) {
 
             @Override
-            public void processElement(Tuple2<Integer, Long>  objID,  ReadOnlyContext ctx, Collector<String> collector) throws Exception {
+            public void processElement(Tuple3<Integer, Long, Long>  objID,  ReadOnlyContext ctx, Collector<String> collector) throws Exception {
 
                 LocalDateTime localDateTime = LocalDateTime.now();
                 GraphPath<String, DefaultWeightedEdge> shortestPath = this.shortestIDPathMap.get(objID.f0);
@@ -157,6 +160,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 Double currentDisplacementPerUnitTime =  0.0;
 
                 Long batchID = objID.f1;
+                Long firstTimeStamp = objID.f2;
                 boolean condition = true;
 
                 ReadOnlyBroadcastState<String,Tuple8<Integer, Long, Integer, Long, Long, Integer, Long, Long>> bcState = ctx.getBroadcastState(this.edgeTrafficMapDesc);
@@ -270,8 +274,10 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                     lastAzimuthVState.update(edgeAzimuth);
                 }
 
+                while ((System.nanoTime() - firstTimeStamp)/1E6 < consecutiveTrajTuplesIntervalMilliSec) {}
+
                 if (outputFormat.equals("GeoJSON")) {
-                        collector.collect(Serialization.generatePointJson(
+                    collector.collect(Serialization.generatePointJson(
                                 outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(),
                                 currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""),
                                 currentRoadTraffic, currentDisplacementPerUnitTime,

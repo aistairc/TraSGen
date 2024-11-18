@@ -47,14 +47,17 @@ public class IntStreamBroadcastManager1tuple extends RichFlatMapFunction<Tuple6<
 
     private int parallelism;
 
+    private int consecutiveTrajTuplesIntervalMilliSec;
 
-    public IntStreamBroadcastManager1tuple(long countRows, long numRows, int parallelism, HashSet<Integer> objIDrange, HashSet<Integer> currentTrajIDs, long batchID, double syncPercentage) throws Exception {
+
+    public IntStreamBroadcastManager1tuple(long countRows, long numRows, int parallelism, HashSet<Integer> objIDrange, HashSet<Integer> currentTrajIDs, long batchID, double syncPercentage, int consecutiveTrajTuplesIntervalMilliSec) throws Exception {
         this.numRows = numRows;
         this.objIDrange = objIDrange;
         this.currentTrajIDs = currentTrajIDs;
         this.countRows = countRows;
         this.batchID = batchID;
         this.parallelism = parallelism;
+        this.consecutiveTrajTuplesIntervalMilliSec = consecutiveTrajTuplesIntervalMilliSec;
     }
 
     @Override
@@ -93,6 +96,11 @@ public class IntStreamBroadcastManager1tuple extends RichFlatMapFunction<Tuple6<
             receivedControlTuples = 0;
             batchID++;
 
+            long startTime = System.nanoTime();
+            long endTime;
+            do{
+                endTime = System.nanoTime();
+            }while((endTime - startTime)/1E6 < this.consecutiveTrajTuplesIntervalMilliSec);
 
             // generate objIDs
             for (int ID : objIDrange) {

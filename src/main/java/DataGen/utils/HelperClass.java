@@ -18,7 +18,8 @@ package DataGen.utils;
 
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.shaded.akka.org.jboss.netty.util.internal.ThreadLocalRandom;
+//import org.apache.flink.shaded.akka.org.jboss.netty.util.internal.ThreadLocalRandom;
+import org.apache.flink.shaded.netty4.io.netty.util.internal.ThreadLocalRandom;
 import org.geotools.referencing.GeodeticCalculator;
 import org.locationtech.jts.geom.*;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;

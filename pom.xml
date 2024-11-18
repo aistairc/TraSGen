@@ -27,8 +27,8 @@ under the License.
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<flink.version>1.13.6</flink.version>
-		<java.version>8</java.version>
+		<flink.version>1.16.3</flink.version>
+		<java.version>11</java.version>
 		<log4j.version>2.17.0</log4j.version>
 		<scala.binary.version>2.11</scala.binary.version>
 		<geotools.version>28.0</geotools.version>
@@ -79,21 +79,21 @@ under the License.
 		<!-- (Added) Web Interface to visualize Flink Application -->
 		<dependency>
 			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-runtime-web_2.11</artifactId>
+			<artifactId>flink-runtime-web</artifactId>
 			<version>${flink.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
+			<artifactId>flink-streaming-java</artifactId>
 			<version>${flink.version}</version>
 			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-connector-kafka_2.11</artifactId>
-			<version>1.13.6</version>
+			<artifactId>flink-connector-kafka</artifactId>
+			<version>${flink.version}</version>
 		</dependency>
 
 		<dependency>
@@ -106,7 +106,7 @@ under the License.
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-metrics-dropwizard</artifactId>
-			<version>1.13.0</version>
+			<version>${flink.version}</version>
 		</dependency>
 
 		<dependency>
@@ -441,7 +441,7 @@ under the License.
 				</dependency>
 				<dependency>
 					<groupId>org.apache.flink</groupId>
-					<artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
+					<artifactId>flink-streaming-java</artifactId>
 					<version>${flink.version}</version>
 					<scope>compile</scope>
 				</dependency>

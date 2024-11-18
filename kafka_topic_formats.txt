@@ -1,0 +1,4 @@
+### Output Formats ####
+outputTopicName (Default: 'SpatialDataGenOutput'): GeoJson
+'Feedback': Tuple9<EdgeName, TrafficCount, EdgeName, TrafficCount, currentTimeMillis, seqID, TrajStatus, objID, batchID>
+'BroadcastStateUpdate': Tuple6<"syncState", expectedBatchCount, totalBatchCount, currBatchCount, currbatchID, removeIDList>

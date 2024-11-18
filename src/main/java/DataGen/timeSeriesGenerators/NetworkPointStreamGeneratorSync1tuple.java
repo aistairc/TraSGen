@@ -111,7 +111,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
         //read edge information from Kafka topic Feedback
         DataStream<String> edgeTrafficCountString = this.env.addSource(new FlinkKafkaConsumer<>("Feedback", new SimpleStringSchema(), this.kafkaProperties));
         //Deserialize String -> Tuple2
-        //EdgeName, TrafficCount, EdgeName, TrafficCount, currentTimeMillis(), seqID, TrajStatus, objID
+
 
         DataStream<Tuple9<String, Integer, String, Integer, Long, Long, Integer,Integer, Long>> edgeTrafficCount = edgeTrafficCountString.map(new MapFunction<String, Tuple9<String, Integer, String, Integer, Long, Long, Integer,Integer, Long>>() {
             @Override
@@ -131,7 +131,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
         MapStateDescriptor<String,HashSet<Integer>> expectedobjIDStateDesc = new MapStateDescriptor<>( "expectedobjIDState",  BasicTypeInfo.STRING_TYPE_INFO, TypeInformation.of(new TypeHint<HashSet<Integer>>() {}));
 //
 
-        // String, Integer, String, Integer, Long, Long, Integer, Long
         BroadcastStream<Tuple9<String, Integer, String, Integer, Long, Long, Integer, Integer, Long>> broadcastTrafficMap = edgeTrafficCount.broadcast(broadcastStateDescriptor,syncStateDescriptor, objIDStateDesc, removeIDStateDesc, expectedobjIDStateDesc); //Broadcast edgeTrafficCount
         //OutputTag required to generate side output datastream sent to be written to Feedback
         OutputTag<Tuple9<String, Integer, String, Integer, Long, Long,Integer, Integer, Long>> outputTag = new OutputTag<Tuple9<String, Integer, String, Integer, Long, Long, Integer, Integer, Long>>("feedback-sideoutput"){};  // String, Integer, String, Integer, Long, Long, Integer, Long
@@ -294,8 +293,8 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 BroadcastState<String,HashSet<Integer>> removeIDState = ctx.getBroadcastState(this.removeIDState);
                 BroadcastState<String,HashSet<Integer>> objIDState = ctx.getBroadcastState(this.objIDState);
                 BroadcastState<String,HashSet<Integer>> expectedobjIDState = ctx.getBroadcastState(this.expectedobjIDState);
-                //                                  0                   1               2               3
-                // "syncState", Tuple5.of(expectedBatchCount, totalBatchCount, currBatchCount, currbatchID));
+                //                                  0                   1               2               3       4
+                // "syncState", Tuple5.of(expectedBatchCount, totalBatchCount, currBatchCount, currbatchID, removeIDs));
 
 //                System.out.println(edgeTraffic.toString());
 
@@ -419,14 +418,13 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 currentTime =  System.currentTimeMillis();
                 deltaT = currentTime -  sideoutputTimestamp;
 
-                //update_time, currenttime, seqID, size, deltaT, trajStatus,objID
                 bcState.put("update_time", Tuple8.of(totalEdgeTraffic1, deltaT, totalEdgeTraffic2 , totalBatchCount, seqID, trajStatus, objID.longValue(), batchID));
 
             }
 
         });
 
-        // "update_time", 0, 0L, 0 , bcCount, trajStatus, seqID, objID
+        // "update_time", 0, 0L, 0 , bcCount, trajStatus, seqID, objID, batchID
         DataStream<Tuple9<String, Integer, String, Integer, Long, Long,Integer, Integer, Long>> edgeTrafficStream = networkPoints.getSideOutput(outputTag);
         DataStream<Tuple6<String, Long, Long, Long, Long, HashSet<Integer>>> controlTupleStream = networkPoints.getSideOutput(controlTupleTag);
         DataStream<String> edgeTrafficStreamSink = edgeTrafficStream.map(new MapFunction<Tuple9<String, Integer, String, Integer, Long, Long,Integer, Integer, Long>, String>() {

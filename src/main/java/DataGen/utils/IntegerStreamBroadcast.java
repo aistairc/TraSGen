@@ -40,6 +40,8 @@ public class IntegerStreamBroadcast {
     private  long countRows = 0;
     private int consecutiveTrajTuplesIntervalMilliSec;
 
+    private int consecutiveTrajTuplesIntervalMilliSec;
+
     StreamExecutionEnvironment env;
     private Properties kafkaProperties = null;
     private long count = 0L;

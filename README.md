@@ -1,4 +1,4 @@
-# TraSGen: A Distributed, Scalable and Continuous Trajectory Stream Generator
+# TraSGen: A Distributed, Scalable and Continuous Realistic Trajectory Stream Generator
 A brief description of essential requirements for operating TraSGen are given below:
 
 ## External Dependencies

@@ -36,10 +36,7 @@ public class IntegerStreamBroadcast {
     private final int minObjID;
     private final int maxObjID;
     private final long numRows;
-
     private  long countRows = 0;
-    private int consecutiveTrajTuplesIntervalMilliSec;
-
     private int consecutiveTrajTuplesIntervalMilliSec;
 
     StreamExecutionEnvironment env;

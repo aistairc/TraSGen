@@ -160,7 +160,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
 
                 ReadOnlyBroadcastState<String,Tuple8<Integer, Long, Integer, Long, Long, Integer, Long, Long>> bcState = ctx.getBroadcastState(this.edgeTrafficMapDesc);
                 ReadOnlyBroadcastState<String,HashSet<Integer>> expectedobjIDState = ctx.getBroadcastState(this.expectedobjIDState);
-                ReadOnlyBroadcastState<String,HashSet<Integer>> objIDState = ctx.getBroadcastState(this.objIDState);
 
                 if (expectedobjIDState.get("expectedobjIDState") != null ) {
                     trafficTupleSet = expectedobjIDState.get("expectedobjIDState");
@@ -200,6 +199,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
 
                     String edgeTarget = shortestPath.getGraph().getEdgeTarget(currentEdge);
                     Coordinate edgeTargetCoordinates = networkPath.getNodeCoordinate(edgeTarget);
+
                     String edgeSource =  shortestPath.getGraph().getEdgeSource(currentEdge);
                     Coordinate edgeSourceCoordinates = networkPath.getNodeCoordinate(edgeSource);
 
@@ -229,6 +229,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                             currentEdge = shortestPathEdgeList.get(currentEdgeIndex);
                             if (condition)
                             {ctx.output(outputTag, Tuple9.of(oldEdge.toString(), -1, currentEdge.toString(), 1, System.currentTimeMillis(), seqID.value(), 0, objID.f0, objID.f1));}
+                            // add coordinate
 
                         }
 
@@ -293,8 +294,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 BroadcastState<String,HashSet<Integer>> removeIDState = ctx.getBroadcastState(this.removeIDState);
                 BroadcastState<String,HashSet<Integer>> objIDState = ctx.getBroadcastState(this.objIDState);
                 BroadcastState<String,HashSet<Integer>> expectedobjIDState = ctx.getBroadcastState(this.expectedobjIDState);
-                //                                  0                   1               2               3       4
-                // "syncState", Tuple5.of(expectedBatchCount, totalBatchCount, currBatchCount, currbatchID, removeIDs));
 
 //                System.out.println(edgeTraffic.toString());
 
@@ -314,6 +313,8 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 Integer totalEdgeTraffic2 = 0;
 
                 // for syncState
+                //                                  0                   1               2               3       4
+                // "syncState", Tuple5.of(expectedBatchCount, totalBatchCount, currBatchCount, currbatchID, removeIDs));
                 Long currBatchCount = 0L;
                 Long totalBatchCount = 0L;
                 Long currBatchID = 1L;

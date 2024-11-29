@@ -135,6 +135,7 @@ public class StreamingJob implements Serializable {
 
 		}
 
+
 		//networkOption
 		NetworkDistribution network = null;
 		switch (trajectoryType) {
@@ -179,7 +180,6 @@ public class StreamingJob implements Serializable {
 
 		DataStream<String> geometryStream;
 		geometryStream = streamGenerator.generate(objIDStreamWithBatchID);
-
 		switch (outputOption) {
 			case "kafka": {
 				//Sending output stream to Kafka

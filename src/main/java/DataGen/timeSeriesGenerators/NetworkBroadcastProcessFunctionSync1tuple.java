@@ -17,12 +17,8 @@
 package DataGen.timeSeriesGenerators;
 
 import DataGen.timeSeriesGenerators.network.NetworkDistribution;
-import org.apache.flink.api.common.state.MapStateDescriptor;
-import org.apache.flink.api.common.state.ValueState;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.state.*;
+import org.apache.flink.api.common.typeinfo.*;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple8;
@@ -38,19 +34,22 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends KeyedBroadcastProcessFunction<Integer, Tuple2<Integer,Long>, Tuple9<String, Integer, String, Integer, Long, Long, Integer,Integer, Long>, String> {
+public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends KeyedBroadcastProcessFunction<Integer, Tuple2<Integer,Long>, String, String> {
     final Class<G> typeParameterClass;
     protected ValueState<Integer> currentEdgeIndexVState = null;
     protected ValueState<Double> lastAzimuthVState = null;
     protected ValueState<G> lastGeometryVState = null;
+
+    protected ValueState<Double> lastSpeedVState = null;
     protected NetworkDistribution networkDistribution;
     protected Map<Integer, GraphPath<String, DefaultWeightedEdge>> shortestIDPathMap = null;
     protected ValueState<Long> seqID = null; // Trajectory points sequence id to help end user generate trajectory from output stream
     protected CoordinateReferenceSystem crs;
-    protected double displacementMetersPerSecond;
+//    protected double displacementMetersPerSecond;
 
     protected transient GeodeticCalculator gc;
     protected ValueState<HashSet<Integer>> objIDVState = null;
@@ -58,6 +57,8 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
 
     protected ValueState<Long> TUCounter = null;
     protected ValueState<Long> TScurrBatchID = null;
+
+    protected ListState<String>  lookAheadEdgesState = null;
 
     protected Random random;
 
@@ -71,6 +72,13 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
     MapStateDescriptor<String,HashSet<Integer>> removeIDState;
     MapStateDescriptor<String,HashSet<Integer>> expectedobjIDState;
 
+    MapStateDescriptor<String, List<String>>  carFollowingVehState;
+
+    ValueStateDescriptor<Integer> currentEdgeIndexVStateDescriptor;
+
+    ListStateDescriptor<String>  lookAheadEdgesStateDescriptor;
+
+
 
 
     public NetworkBroadcastProcessFunctionSync1tuple(Class<G> typeParameterClass, NetworkDistribution networkDistribution,
@@ -80,7 +88,7 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
         this.typeParameterClass = typeParameterClass;
         this.shortestIDPathMap = shortestIDPathMap;
         this.crs = crs;
-        this.displacementMetersPerSecond = displacementMetersPerSecond;
+//        this.displacementMetersPerSecond = displacementMetersPerSecond;
         this.random = random;
 
     }
@@ -95,6 +103,9 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
         this.edgeTrafficMapDesc = new MapStateDescriptor<>("edgeTrafficMap", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Long.class, Long.class, Integer.class, Long.class, Long.class));
         this.syncState = new MapStateDescriptor<>("syncState", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Long.class, Long.class, Long.class, Long.class));
 //        this.syncState = new MapStateDescriptor<>("syncState", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Long.class, Long.class, Long.class, Long.class, TypeInformation.of(new TypeHint<HashSet<Integer>>() {})));
+
+        this.carFollowingVehState = new MapStateDescriptor<>("carFollowingVehState", BasicTypeInfo.STRING_TYPE_INFO, Types.LIST(TypeInformation.of(new TypeHint<String>() {})));
+//
 
         this.objIDState= new MapStateDescriptor<>(
                 "objIDState",
@@ -113,7 +124,13 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
                 TypeInformation.of(new TypeHint<HashSet<Integer>>() {}));
 
 
-        ValueStateDescriptor<Integer> currentEdgeIndexVStateDescriptor = new ValueStateDescriptor<>(
+        this.lookAheadEdgesStateDescriptor = new ListStateDescriptor<>(
+                "lookAheadEdgesState",
+                TypeInformation.of(new TypeHint<String>() {}));
+        this.lookAheadEdgesState = getRuntimeContext().getListState(lookAheadEdgesStateDescriptor);
+
+
+        this.currentEdgeIndexVStateDescriptor = new ValueStateDescriptor<>(
                 "currentEdgeIndexVStateDescriptor", // the state name
                 TypeInformation.of(new TypeHint<Integer>() {}));
         this.currentEdgeIndexVState = getRuntimeContext().getState(currentEdgeIndexVStateDescriptor);
@@ -136,6 +153,11 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
                 "lastAzimuthVStateDescriptor", // the state name
                 TypeInformation.of(new TypeHint<Double>() {}));
         this.lastAzimuthVState = getRuntimeContext().getState(lastAzimuthVStateDescriptor);
+
+        ValueStateDescriptor<Double> lastSpeedVStateDescriptor = new ValueStateDescriptor<>(
+                "lastAzimuthVState", // the state name
+                TypeInformation.of(new TypeHint<Double>() {}));
+        this.lastSpeedVState = getRuntimeContext().getState(lastSpeedVStateDescriptor);
 
 
         ValueStateDescriptor<Long> seqIDDescriptor = new ValueStateDescriptor<>(
@@ -168,6 +190,8 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
                 "removeIDVStateDescriptor", // the state name
                 TypeInformation.of(new TypeHint<HashSet<Integer>>() {}));
         this.removeIDVState = getRuntimeContext().getState(removeIDVStateDescriptor);
+
+
 
 
 

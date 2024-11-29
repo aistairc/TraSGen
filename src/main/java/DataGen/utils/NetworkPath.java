@@ -121,35 +121,6 @@ public class NetworkPath implements Serializable {
         return shortestPathAlgorithm.getPath(startingNode, endingNode);
     }
 
-    public List<Tuple2<Coordinate, Coordinate>> getShortestPathCoordinates(String startingNode, String endingNode){
-
-        GraphPath<String, DefaultWeightedEdge> shortestPath = shortestPathAlgorithm.getPath(startingNode, endingNode);
-        return shortestPathToCoordinatesList(shortestPath);
-    }
-
-    public List<Tuple2<Coordinate, Coordinate>> shortestPathToCoordinatesList(GraphPath<String, DefaultWeightedEdge> shortestPath){
-
-        List<Tuple2<Coordinate, Coordinate>> edgeCoordinatesList = new ArrayList<>();
-        List<DefaultWeightedEdge> edgeList = shortestPath.getEdgeList();
-
-
-        for (DefaultWeightedEdge edge:edgeList) {
-            String edgeSource = shortestPath.getGraph().getEdgeSource(edge).toString();
-            Coordinate edgeSourceCoordinates = getNodeCoordinate(edgeSource);
-
-            String edgeTarget = shortestPath.getGraph().getEdgeTarget(edge).toString();
-            Coordinate edgeTargetCoordinates = getNodeCoordinate(edgeTarget);
-
-            edgeCoordinatesList.add(Tuple2.of(edgeSourceCoordinates, edgeTargetCoordinates));
-        }
-
-        return edgeCoordinatesList;
-    }
-
-    public double getShortestPathWeight(String startingNode, String endingNode){
-        return shortestPathAlgorithm.getPathWeight(startingNode, endingNode);
-    }
-
     public Coordinate getNodeCoordinate(String nodeID){
         return geoJSONMapToGraph.getNodeCoordinate(nodeID);
     }

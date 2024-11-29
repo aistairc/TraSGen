@@ -39,11 +39,21 @@ public class SpatialFunctions implements Serializable {
         try {
 //            distance = JTS.orthodromicDistance(firstCoordinate,secondCoordinate,crs); //caused low throughput with parallelism
             //Optimized
+
             gc.setStartingPosition(JTS.toDirectPosition(firstCoordinate, crs));
             gc.setDestinationPosition(JTS.toDirectPosition(secondCoordinate, crs));
             distance =  gc.getOrthodromicDistance();
 
-        } catch (TransformException e) {
+//            if (distance == 0.0) {
+//                throw new IllegalArgumentException("Coordinate A: " + firstCoordinate + ", Coordinate B:"  + secondCoordinate);
+//            }
+
+        }
+//        catch (IllegalArgumentException e) {
+//            e.printStackTrace();
+//            System.exit(0);
+//        }
+        catch (TransformException e) {
             e.printStackTrace();
         }
 
@@ -62,6 +72,7 @@ public class SpatialFunctions implements Serializable {
             gc.setStartingPosition(JTS.toDirectPosition(startingCoordinate, crs));
             gc.setDestinationPosition(JTS.toDirectPosition(destinationCoordinate, crs));
             angle = gc.getAzimuth();
+
         } catch (TransformException e) {
             e.printStackTrace();
         }

@@ -72,7 +72,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
     private int timeStepinMilliSec = 0;
     boolean randomizeTimeInBatch;
 
-    private int lookAheadDistance = 100;
+    private int lookAheadDistance = 150;
 
 
 
@@ -355,11 +355,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 }
 
                 if (outputFormat.equals("GeoJSON")) {
-
-//                    if (lastSpeedVState.value() <= 0.0 || lastSpeedVState.value() > 100.0  ) { System.out.println("TrajID: " + objID.f0  + " Speed is incorrect:" + lastSpeedVState.value());   System.exit(0);}
-//                    if (lastSpeedVState.value() < 15.0  ) { System.out.println("TrajID: " + objID.f0  + " Speed is: " + lastSpeedVState.value()); ;}
-//                    if (lastSpeedVState.value() > 50.0  ) { System.out.println("TrajID: " + objID.f0  + " SPEED IS....... : " + lastSpeedVState.value()); ;}
-
 
                     collector.collect(Serialization.generatePointJson(
                                 outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(),

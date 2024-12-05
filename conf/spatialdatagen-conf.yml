@@ -31,7 +31,7 @@ output:
     timeStep: 100             #in milliseconds
     randomizeTimeInBatch: False
     # numberOfTrajectories at any time instant. Time stream object IDs are generated in the following range
-    objIDRange: [1, 1000]  # Upper bound inclusive
+    objIDRange: [1, 5000]  # Upper bound inclusive
     # Set nRows to -1 for infinite number of rows
     nRows: -1
     # consecutive Traj Tuples Generation Interval in seconds. 0 for no interval (max throughput)

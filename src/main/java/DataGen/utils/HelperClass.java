@@ -507,63 +507,6 @@ public class HelperClass {
         return ret;
     }
 
-    public static double getDisplacementMetersPerSecond(int roadCapacity, Coordinate edgeSourceCoordinates,
-                                                        Coordinate edgeTargetCoordinates, int currentRoadTraffic,
-                                                        double displacementMetersPerSecond, CoordinateReferenceSystem crs,
-                                                        GeodeticCalculator gc){
-
-        double roadLength = SpatialFunctions.getDistanceInMeters(edgeSourceCoordinates, edgeTargetCoordinates, crs, gc);
-        double carLength = 10; //meters
-        double lanes = 2;
-
-        if (roadLength <= carLength)
-            roadCapacity = 1;
-        else
-            roadCapacity = (int) ((roadLength/carLength) * lanes);
-
-        if(currentRoadTraffic <= roadCapacity){
-            return displacementMetersPerSecond;
-        }
-
-        return ((float)roadCapacity/currentRoadTraffic)*displacementMetersPerSecond;
-    }
-
-
-        //// ------- IDM  Speed Calculation ---------
-        public static double calculateAcceleration(double velocity, double distanceToLead, double leadVelocity) {
-
-            // Parameters for the IDM
-            double desiredVelocity = 80.0; //  (m/s)
-            double maxAcceleration = 1.5;  //  (m/s^2)      //a
-            double desiredTimeGap = 1.8;   // (s)           //T
-            double minSpacing = 5.0;       // (m)
-            double comfortableDeceleration = 2.0; //(m/s^2) //b
-            double delta = 4;
-            double minAcceleration = -9.8; // Maximum deceleration (emergency braking, m/s^2)
-
-            if (distanceToLead == 0.0)
-
-            {
-//                System.out.println("followvelocity: " + velocity + "distanceToLead: " + distanceToLead + "leadVelocity: " + leadVelocity);
-                distanceToLead = getRandomDoubleInRange(40, 70); // TODO minSpacing, lookheadDistance
-//                System.out.println("correctedDistanceToLead: " + distanceToLead);
-            }
-
-
-
-//
-
-            double freeRoadTerm = 1 - Math.pow(velocity / desiredVelocity, delta);  // (1 - v/v0)^sigma
-            double deltaV = velocity - leadVelocity;
-            double safeDistance = minSpacing + Math.max(0, velocity * desiredTimeGap + (velocity * deltaV) /
-                    (2 * Math.sqrt(maxAcceleration * comfortableDeceleration)));            // s*
-            double interactionTerm = Math.pow(safeDistance / distanceToLead, 2);    //(s*/s)^2
-            double rawAcceleration =  maxAcceleration * (freeRoadTerm - interactionTerm);
-
-            return Math.max(minAcceleration, rawAcceleration);
-
-
-        }
 
     public static Double IDMonVehicleList(List<String> leadVehiclesList, int objID, double followVelocity, Coordinate followPosition, double followAzimuth,
                              CoordinateReferenceSystem crs,  GeodeticCalculator gc) throws JsonProcessingException {
@@ -607,7 +550,7 @@ public class HelperClass {
 
         // calculate new IDM speed
 
-        return IDM(followVelocity, closestLeadVelocity, leastLeadDistance);
+        return SpatialFunctions.IDM(followVelocity, closestLeadVelocity, leastLeadDistance);
 
     }
 
@@ -641,23 +584,6 @@ public class HelperClass {
 
 
     }
-
-
-        public static Double IDM(double followVelocity, double leadVelocity, double distanceToLead) throws JsonProcessingException {
-
-            double timeStep = 1;
-            double minVelocity = 10; //  (m/s)
-            double acceleration = calculateAcceleration(followVelocity, distanceToLead, leadVelocity);
-
-//            System.out.println("acceleration: " + acceleration);
-
-            // Update vehicle velocity
-            double newVelocity = Math.max(minVelocity, followVelocity + acceleration * timeStep);
-
-            return newVelocity;
-
-            }
-
 
     }
 

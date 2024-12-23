@@ -117,7 +117,7 @@ public class SpatialFunctions implements Serializable {
                                                         GeodeticCalculator gc){
 
         double roadLength = SpatialFunctions.getDistanceInMeters(edgeSourceCoordinates, edgeTargetCoordinates, crs, gc);
-        double carLength = 10; //meters
+        double carLength = 5; //meters
         double lanes = 2;
 
         if (roadLength <= carLength)
@@ -131,6 +131,41 @@ public class SpatialFunctions implements Serializable {
 
         return ((float)roadCapacity/currentRoadTraffic)*displacementMetersPerSecond;
     }
+
+
+    public static double getDisplacementMetersPerSecond(double roadLength, int currentRoadTraffic){
+
+        double desiredVelocity = 120.0; //  (m/s)
+        double carLength = 5; //meters
+        double lanes = 1; // one way;
+        double minVelocity = 10.0;
+
+        int minRoadCapacity;
+        int roadCapacity;
+        if (roadLength <= carLength) {
+            roadCapacity = 1;
+            minRoadCapacity = 1;
+        }
+        else {
+            roadCapacity = (int) ((roadLength / carLength) * lanes);
+            minRoadCapacity = roadCapacity / 4;
+        }
+
+
+
+//        System.out.println("currentRoadTraffic " + currentRoadTraffic + "roadCapacity " + roadCapacity );
+
+        if(currentRoadTraffic <= minRoadCapacity){
+            return desiredVelocity;
+        }
+
+        double newVelocity = Math.max(minVelocity, (float) (minRoadCapacity /currentRoadTraffic)*desiredVelocity);
+
+//        System.out.println("newVelocity " + newVelocity);
+
+        return newVelocity;
+    }
+
 
 
     //// ------- IDM  Speed Calculation ---------
@@ -176,6 +211,7 @@ public class SpatialFunctions implements Serializable {
 
         // Update vehicle velocity
         double newVelocity = Math.max(minVelocity, followVelocity + acceleration * timeStep);
+
 
         return newVelocity;
 

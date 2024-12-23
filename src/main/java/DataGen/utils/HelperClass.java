@@ -508,7 +508,7 @@ public class HelperClass {
     }
 
 
-    public static Double IDMonVehicleList(List<String> leadVehiclesList, int objID, double followVelocity, Coordinate followPosition, double followAzimuth,
+    public static Double IDMonVehicleList(List<String> leadVehiclesList,int objID, double followVelocity, Coordinate followPosition, double followAzimuth,
                              CoordinateReferenceSystem crs,  GeodeticCalculator gc) throws JsonProcessingException {
 
 
@@ -528,11 +528,6 @@ public class HelperClass {
             leadAzimuth = (leadAzimuth + 360) % 360;
             followAzimuth = (followAzimuth + 360) % 360;
             double angle = leadAzimuth - followAzimuth;
-
-            //filter on azimuth angles
-            if ((angle < -30 && angle > 30) || (objID == leadTrajID)) {
-                break;
-            }
 
 
             //find leastDistance

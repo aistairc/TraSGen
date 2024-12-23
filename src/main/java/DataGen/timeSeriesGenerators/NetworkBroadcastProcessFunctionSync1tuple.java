@@ -71,11 +71,7 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
     MapStateDescriptor<String,HashSet<Integer>> objIDState;
     MapStateDescriptor<String,HashSet<Integer>> removeIDState;
     MapStateDescriptor<String,HashSet<Integer>> expectedobjIDState;
-
-    MapStateDescriptor<String, List<String>>  carFollowingVehState;
-
     ValueStateDescriptor<Integer> currentEdgeIndexVStateDescriptor;
-
     ListStateDescriptor<String>  lookAheadEdgesStateDescriptor;
 
 
@@ -103,9 +99,6 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
         this.edgeTrafficMapDesc = new MapStateDescriptor<>("edgeTrafficMap", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Long.class, Long.class, Integer.class, Long.class, Long.class));
         this.syncState = new MapStateDescriptor<>("syncState", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Long.class, Long.class, Long.class, Long.class));
 //        this.syncState = new MapStateDescriptor<>("syncState", BasicTypeInfo.STRING_TYPE_INFO, TupleTypeInfo.getBasicTupleTypeInfo(Long.class, Long.class, Long.class, Long.class, TypeInformation.of(new TypeHint<HashSet<Integer>>() {})));
-
-        this.carFollowingVehState = new MapStateDescriptor<>("carFollowingVehState", BasicTypeInfo.STRING_TYPE_INFO, Types.LIST(TypeInformation.of(new TypeHint<String>() {})));
-//
 
         this.objIDState= new MapStateDescriptor<>(
                 "objIDState",

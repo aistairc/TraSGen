@@ -13,13 +13,11 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.*;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
-import org.apache.flink.runtime.state.KeyedStateFunction;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.flink.util.Collector;
@@ -28,12 +26,9 @@ import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -164,7 +159,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
 
                 ReadOnlyBroadcastState<String,Tuple8<Integer, Long, Integer, Long, Long, Integer, Long, Long>> bcState = ctx.getBroadcastState(this.edgeTrafficMapDesc);
                 ReadOnlyBroadcastState<String,HashSet<Integer>> expectedobjIDState = ctx.getBroadcastState(this.expectedobjIDState);
-                ReadOnlyBroadcastState<String,List<String>> bcStateVehicleCoordinates = ctx.getBroadcastState(this.carFollowingVehState);
 
                 if (expectedobjIDState.get("expectedobjIDState") != null ) {
                     trafficTupleSet = expectedobjIDState.get("expectedobjIDState");
@@ -228,29 +222,39 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                         currentRoadTraffic = bcState.get(currentEdge.toString()).f0;
                     }
 
-//                    currentDisplacementPerUnitTime = HelperClass.getDisplacementMetersPerSecond(ROAD_CAPACITY, edgeSourceCoordinates,edgeTargetCoordinates, currentRoadTraffic, initialSpeed, this.crs, this.gc);
-                    // impeding object on the same edge
-                    Double newDisplacementPerUnitTime = null;
-//                    System.out.println(currentDisplacementPerUnitTime);
-                    if (bcStateVehicleCoordinates.get(currentEdge.toString()) != null){
-                        List<String> leadVehicles = bcStateVehicleCoordinates.get(currentEdge.toString());
-                        newDisplacementPerUnitTime = HelperClass.IDMonVehicleList(leadVehicles, objID.f0, currentDisplacementPerUnitTime, lastPointCoordinates,lastAzimuth, this.crs, this.gc, edgeTargetCoordinates);
-//                        System.out.println("newDisplacementPerUnitTime " + newDisplacementPerUnitTime);
+
+
+                    // distance to impeding object
+                    Double approxDistLeadVeh = 0.0;
+                    Double leadEdgeLength = shortestPath.getGraph().getEdgeWeight(currentEdge);
+                    Double distOnEdge = remainingDistOnEdge;
+                    Integer roadTrafficLeadEdge = currentRoadTraffic;
+                     if (currentRoadTraffic != 0) {
+                         approxDistLeadVeh = leadEdgeLength / currentRoadTraffic;
+                     }
+                    if (currentRoadTraffic == 0 || remainingDistOnEdge < approxDistLeadVeh) {
+                        int nxtEdgeIndex = currentEdgeIndex + 1;
+                        while (distOnEdge < lookAheadDistance) {
+                            if (nxtEdgeIndex < shortestPathEdgeList.size()) {
+                                DefaultWeightedEdge nextEdge = shortestPathEdgeList.get(nxtEdgeIndex);
+                                if (bcState.contains(nextEdge.toString())) {
+                                    roadTrafficLeadEdge = bcState.get(nextEdge.toString()).f0;
+                                }
+                                leadEdgeLength = shortestPath.getGraph().getEdgeWeight(nextEdge);
+                                if (roadTrafficLeadEdge != 0) {
+                                    approxDistLeadVeh = distOnEdge + (leadEdgeLength/roadTrafficLeadEdge);
+                                    break;
+                                }
+                                distOnEdge += leadEdgeLength;
+                                nxtEdgeIndex++;
+                            } else {break;}
+                        }
                     }
 
-                    //impeding object on other edges
-                    if (newDisplacementPerUnitTime == null) {
-                       for(Map.Entry<String,List<String>> entry : bcStateVehicleCoordinates.immutableEntries()) {
-                           if (!entry.getKey().equals(currentEdge.toString())) {
-                               if (bcStateVehicleCoordinates.get(entry.getKey()) != null) {
-                                   List<String> leadVehicles = bcStateVehicleCoordinates.get(entry.getKey());
-                                   newDisplacementPerUnitTime = HelperClass.IDMonVehicleList(leadVehicles, objID.f0, currentDisplacementPerUnitTime, lastPointCoordinates, lastAzimuth, this.crs, this.gc);
-                               }
-                           }
-                       }
-                    }
+                    //leading object speed approx
+                    Double approxSpeedLeadVeh = SpatialFunctions.getDisplacementMetersPerSecond(leadEdgeLength, roadTrafficLeadEdge);
+                    currentDisplacementPerUnitTime = SpatialFunctions.IDM(currentDisplacementPerUnitTime, approxSpeedLeadVeh, approxDistLeadVeh);
 
-                    currentDisplacementPerUnitTime = (newDisplacementPerUnitTime != null) ? newDisplacementPerUnitTime : currentDisplacementPerUnitTime;
                     //update speed
 //                    System.out.println(currentDisplacementPerUnitTime);
                     lastSpeedVState.update(currentDisplacementPerUnitTime);
@@ -381,7 +385,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 BroadcastState<String,HashSet<Integer>> objIDState = ctx.getBroadcastState(this.objIDState);
                 BroadcastState<String,HashSet<Integer>> expectedobjIDState = ctx.getBroadcastState(this.expectedobjIDState);
 
-                BroadcastState<String,List<String>> bcStateVehicleCoordinates = ctx.getBroadcastState(this.carFollowingVehState); //vehicle coordinates
 
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode edgeTraffic = objectMapper.readTree(edgeTrafficStr);
@@ -401,48 +404,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 Integer totalEdgeTraffic1 = 0;
                 Integer totalEdgeTraffic2 = 0;
 
-
-
-                // clear previous broadcast state if there is a change in batchID
-                if (bcStateVehicleCoordinates.entries() != null)
-                {
-                    for (Map.Entry<String, List<String>> enteries :  bcStateVehicleCoordinates.entries()) {
-                        List<String> entry = enteries.getValue();
-                        String jsonString = entry.get(0);
-                        JsonNode jsonNode2 = objectMapper.readTree(jsonString);
-                        Long oldbatchID = jsonNode2.get("batchID").longValue();
-                        if (oldbatchID != batchID) {bcStateVehicleCoordinates.clear();  break;}
-                        else {break;}
-                    }
-                }
-                //store only those vehicles that lie on look ahead edges
-                ctx.applyToKeyedState(this.lookAheadEdgesStateDescriptor, new KeyedStateFunction<Integer, ListState<String>>() {
-                    @Override
-                    public void process(Integer integer, ListState<String> edgeVS) throws Exception {
-                        String vehEdge;
-
-                        if (traffic1 == 1 || (traffic1 == 0 && traffic2 == 0))  { vehEdge = edge1;}
-                        else if (traffic2 == 1) { vehEdge = edge2;}
-                        else {return;}
-
-
-                        for (String edgeCurrVehicle : edgeVS.get()) {
-
-                            if (edgeCurrVehicle.equals(vehEdge)) {
-                                List<String> vehicles;
-                                if (bcStateVehicleCoordinates.contains(vehEdge)) {
-                                    vehicles = bcStateVehicleCoordinates.get(vehEdge);
-                                }
-                                else {
-                                    vehicles = new ArrayList<>();
-                                }
-                                vehicles.add(edgeTrafficStr);
-                                bcStateVehicleCoordinates.put(vehEdge, vehicles);
-
-                            }
-                        }
-                    }
-                });
 
                 // for syncState
                 //                                  0                   1               2               3       4

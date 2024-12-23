@@ -184,6 +184,7 @@ public class StreamingJob implements Serializable {
 			case "kafka": {
 				//Sending output stream to Kafka
 				geometryStream.addSink(new FlinkKafkaProducer<>(outputTopicName, new Serialization.StringToStringOutput(outputTopicName), kafkaProperties, FlinkKafkaProducer.Semantic.EXACTLY_ONCE)).disableChaining().name("Trajectory Points");
+//				geometryStream.print();
 				break;
 			}
 			case "file":{

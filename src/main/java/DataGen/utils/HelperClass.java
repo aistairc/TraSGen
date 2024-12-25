@@ -16,6 +16,9 @@
 
 package DataGen.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 //import org.apache.flink.shaded.akka.org.jboss.netty.util.internal.ThreadLocalRandom;
@@ -482,7 +485,7 @@ public class HelperClass {
     }
 
     private static List<CoordinateRadian> sortedCoordinate(
-                Coordinate[] coordinates, CoordinateRadian[] coordinateRadians) {
+            Coordinate[] coordinates, CoordinateRadian[] coordinateRadians) {
         List<CoordinateRadian> ret = new ArrayList<>();
         for (Coordinate c: coordinates) {
             for (CoordinateRadian coordinateRadian: coordinateRadians) {
@@ -504,24 +507,78 @@ public class HelperClass {
         return ret;
     }
 
-    public static double getDisplacementMetersPerSecond(int roadCapacity, Coordinate edgeSourceCoordinates,
-                                                        Coordinate edgeTargetCoordinates, int currentRoadTraffic,
-                                                        double displacementMetersPerSecond, CoordinateReferenceSystem crs,
-                                                        GeodeticCalculator gc){
 
-        double roadLength = SpatialFunctions.getDistanceInMeters(edgeSourceCoordinates, edgeTargetCoordinates, crs, gc);
-        double carLength = 10; //meters
-        double lanes = 2;
+    public static Double IDMonVehicleList(List<String> leadVehiclesList,int objID, double followVelocity, Coordinate followPosition, double followAzimuth,
+                                          CoordinateReferenceSystem crs,  GeodeticCalculator gc) throws JsonProcessingException {
 
-        if (roadLength <= carLength)
-            roadCapacity = 1;
-        else
-            roadCapacity = (int) ((roadLength/carLength) * lanes);
 
-        if(currentRoadTraffic <= roadCapacity){
-            return displacementMetersPerSecond;
+        ObjectMapper objectMapper = new ObjectMapper();
+        double leastLeadDistance = Double.POSITIVE_INFINITY;
+        double closestLeadVelocity = 0.0;
+        Integer closestleadTrajID = null;
+
+        for (String leadVehicleJson : leadVehiclesList) {
+            JsonNode leadVehicle = objectMapper.readTree(leadVehicleJson);
+            double leadVelocity = leadVehicle.get("speed").doubleValue();
+            Coordinate leadPosition = new Coordinate(leadVehicle.get("x").doubleValue(), leadVehicle.get("y").doubleValue());
+            double leadAzimuth = leadVehicle.get("azimuth").doubleValue();
+            int leadTrajID = leadVehicle.get("objID").intValue();
+
+            // mapping from [-180 to 180] to [0 to 360]
+            leadAzimuth = (leadAzimuth + 360) % 360;
+            followAzimuth = (followAzimuth + 360) % 360;
+            double angle = leadAzimuth - followAzimuth;
+
+
+            //find leastDistance
+            double distanceToLead = SpatialFunctions.getDistanceInMeters(leadPosition, followPosition, crs, gc);
+//            System.out.println("distanceToLead " + distanceToLead);
+
+
+            if (distanceToLead < leastLeadDistance) {
+                leastLeadDistance = distanceToLead;
+                closestLeadVelocity = leadVelocity;
+                closestleadTrajID = leadTrajID;
+
+            }
         }
 
-        return ((float)roadCapacity/currentRoadTraffic)*displacementMetersPerSecond;
+        // calculate new IDM speed
+
+        return SpatialFunctions.IDM(followVelocity, closestLeadVelocity, leastLeadDistance);
+
     }
+
+    public static Double IDMonVehicleList(List<String> leadVehiclesList, int objID, double followVelocity, Coordinate followPosition, double followAzimuth,
+                                          CoordinateReferenceSystem crs,  GeodeticCalculator gc, Coordinate edgeTargetCoordinates) throws JsonProcessingException {
+
+        // filter for vehicles that lie between follow vehicle and end of edge
+
+        GeometryFactory geometryFactory = new GeometryFactory();
+        LineString roadSegment = geometryFactory.createLineString(new Coordinate[] {followPosition, edgeTargetCoordinates});
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<String> filteredVehiclesList =  new ArrayList<>();
+
+        for (String leadVehicleJson : leadVehiclesList) {
+            JsonNode leadVehicle = objectMapper.readTree(leadVehicleJson);
+            Coordinate leadPosition = new Coordinate(leadVehicle.get("x").doubleValue(), leadVehicle.get("y").doubleValue());
+            Point pointToCheck = geometryFactory.createPoint(leadPosition);
+
+//            if (roadSegment.contains(pointToCheck))
+//                {filteredVehiclesList.add(leadVehicleJson);}
+
+            double distance = roadSegment.distance(pointToCheck);
+            if (distance < 0.001)
+            {filteredVehiclesList.add(leadVehicleJson);}
+
+
+        }
+
+        return IDMonVehicleList(leadVehiclesList, objID, followVelocity, followPosition,followAzimuth, crs, gc);
+
+
+    }
+
 }
+

@@ -193,7 +193,7 @@ public class NetworkPointStreamGeneratorAsync implements StreamGenerator, Serial
                         currentRoadTraffic = bcState.get(currentEdge.toString()).f0;
                     }
 
-                    currentDisplacementPerUnitTime = HelperClass.getDisplacementMetersPerSecond(ROAD_CAPACITY, edgeSourceCoordinates,edgeTargetCoordinates, currentRoadTraffic, this.displacementMetersPerSecond, this.crs, this.gc);
+                    currentDisplacementPerUnitTime = SpatialFunctions.getDisplacementMetersPerSecond(ROAD_CAPACITY, edgeSourceCoordinates,edgeTargetCoordinates, currentRoadTraffic, this.displacementMetersPerSecond, this.crs, this.gc);
 //                    if (currentDisplacementPerUnitTime != 16.0) {System.out.println(currentDisplacementPerUnitTime);}
                     if (remainingDistOnEdge <= currentDisplacementPerUnitTime){
                         outputPointCoordinates = edgeTargetCoordinates;

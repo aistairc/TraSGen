@@ -158,7 +158,7 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
                             double remainingDistOnEdge = SpatialFunctions.getDistanceInMeters(lastPointCoordinates, edgeTargetCoordinates, this.crs, this.gc);
                             double currentDisplacementPerUnitTime = this.displacementMetersPerSecond;
                             if(this.interWorkersDataSharing.equalsIgnoreCase("redis")) {
-                                currentDisplacementPerUnitTime = HelperClass.getDisplacementMetersPerSecond(ROAD_CAPACITY, edgeSourceCoordinates,edgeTargetCoordinates, redis.getRoadSegmentsTrafficMapValue(currentEdge.toString()), this.displacementMetersPerSecond, this.crs, this.gc);
+                                currentDisplacementPerUnitTime = SpatialFunctions.getDisplacementMetersPerSecond(ROAD_CAPACITY, edgeSourceCoordinates,edgeTargetCoordinates, redis.getRoadSegmentsTrafficMapValue(currentEdge.toString()), this.displacementMetersPerSecond, this.crs, this.gc);
                             }
 
                             if (remainingDistOnEdge <= currentDisplacementPerUnitTime){

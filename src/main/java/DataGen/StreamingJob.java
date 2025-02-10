@@ -209,6 +209,7 @@ public class StreamingJob implements Serializable {
 		}
 
 		// execute program
+		System.out.println("Running Approximate IDM model....");
 		env.execute("TraSGen");
 
 		long endTime = System.nanoTime();

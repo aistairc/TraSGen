@@ -216,7 +216,7 @@ public class NetworkPath implements Serializable {
                         String node1 = String.valueOf(HelperClass.getRandomIntInRange(0, numNodesHalf - 1));
                         String node2 = String.valueOf(HelperClass.getRandomIntInRange(numNodesHalf, numNodes - 1));
 
-                        // Seeded random generation
+                        //// Seeded random generation
 //                        String node1 = String.valueOf(HelperClass.getRandomIntInRangeWithoutThread(0, numNodesHalf));
 //                        String node2 = String.valueOf(HelperClass.getRandomIntInRangeWithoutThread(numNodesHalf, numNodes-1));
 

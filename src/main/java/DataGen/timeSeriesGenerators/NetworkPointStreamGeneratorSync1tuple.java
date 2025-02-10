@@ -361,10 +361,10 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 if (outputFormat.equals("GeoJSON")) {
 
                     collector.collect(Serialization.generatePointJson(
-                                outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(),
-                                currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""),
-                                currentRoadTraffic, lastSpeedVState.value(),
-                                HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
+                            outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(),
+                            currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""),
+                            currentRoadTraffic, lastSpeedVState.value(),
+                            HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
 
                 } else {
                     collector.collect(Serialization.generateGeometryWKT(HelperClass.generatePoint(outputPointCoordinates), objID.f0, seqID.value(),

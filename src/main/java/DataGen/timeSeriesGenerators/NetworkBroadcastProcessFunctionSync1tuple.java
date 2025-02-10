@@ -61,8 +61,6 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
 
     protected Random random;
 
-    protected ValueState<Double> lastSpeedVState = null;
-
     protected Random timeGen;
 
     // broadcast state descriptor
@@ -139,11 +137,6 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
                 TypeInformation.of(new TypeHint<Double>() {}));
         this.lastAzimuthVState = getRuntimeContext().getState(lastAzimuthVStateDescriptor);
 
-        ValueStateDescriptor<Double> lastSpeedVStateDescriptor = new ValueStateDescriptor<>(
-                "lastAzimuthVState", // the state name
-                TypeInformation.of(new TypeHint<Double>() {}));
-        this.lastSpeedVState = getRuntimeContext().getState(lastSpeedVStateDescriptor);
-
 
         ValueStateDescriptor<Long> seqIDDescriptor = new ValueStateDescriptor<>(
                 "seqID", // the state name
@@ -182,5 +175,4 @@ public abstract class NetworkBroadcastProcessFunctionSync1tuple<G> extends Keyed
 //
     }
 }
-
 

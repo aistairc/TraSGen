@@ -208,6 +208,7 @@ public class StreamingJob implements Serializable {
 		}
 
 		// execute program
+		System.out.println("Running FDM model ...");
 		env.execute("TraSGen");
 
 		long endTime = System.nanoTime();

@@ -10,7 +10,6 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.state.BroadcastState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ReadOnlyBroadcastState;
-import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -59,8 +58,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
 
     HashSet<Integer> trafficTupleSet = new LinkedHashSet<Integer>();
 
-
-
     int c1 = 0;
     int c2 = 0;
 
@@ -72,10 +69,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
 
     private int timeStepinMilliSec = 0;
     boolean randomizeTimeInBatch;
-
-    private int lookAheadDistance = 150;
-
-    private final double initialSpeed;
 
 
 
@@ -106,7 +99,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
         this.timeStepinMilliSec = timeStepinMilliSec;
         this.dateFormat = dateFormat;
         this.randomizeTimeInBatch = randomizeTimeInBatch;
-        this.initialSpeed = displacementMetersPerSecond;
 
         int totalObjIDs =  maxObjID - minObjID + 1;
         for(int i = minObjID ; i < totalObjIDs + 1 ; i++)
@@ -145,13 +137,10 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
         //      0              1                  2                 3           4           5
         // "syncState",expectedBatchCounts, totalBatchCount, currBatchCount, currbatchID, removeIDList;
         OutputTag<Tuple6<String, Long, Long, Long, Long, HashSet<Integer>>> controlTupleTag = new OutputTag<Tuple6<String, Long, Long, Long, Long, HashSet<Integer>>>("controlTuples"){};
-        SingleOutputStreamOperator<String> networkPoints = keyedobjIDStream.connect(broadcastTrafficMap).process(new NetworkBroadcastProcessFunctionSync1tuple<Coordinate>(Coordinate.class, networkDistribution,
-                this.shortestIDPathMap, this.crs,this.initialSpeed, this.random) {
+        SingleOutputStreamOperator<String> networkPoints = keyedobjIDStream.connect(broadcastTrafficMap).process(new NetworkBroadcastProcessFunctionSync1tuple<Coordinate>(Coordinate.class, networkDistribution, this.shortestIDPathMap, this.crs, this.displacementMetersPerSecond, this.random) {
 
             @Override
             public void processElement(Tuple2<Integer, Long>  objID,  ReadOnlyContext ctx, Collector<String> collector) throws Exception {
-
-
 
                 LocalDateTime localDateTime = LocalDateTime.now();
                 GraphPath<String, DefaultWeightedEdge> shortestPath = this.shortestIDPathMap.get(objID.f0);
@@ -164,7 +153,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                 Coordinate lastPointCoordinates;
                 Double lastAzimuth;
                 Integer currentRoadTraffic = 0;
-                Double currentDisplacementPerUnitTime;
+                Double currentDisplacementPerUnitTime =  0.0;
 
                 Long batchID = objID.f1;
                 boolean condition = true;
@@ -207,7 +196,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
 //)
                     lastPointCoordinates = this.lastGeometryVState.value();
                     lastAzimuth = this.lastAzimuthVState.value();
-                    currentDisplacementPerUnitTime = this.lastSpeedVState.value();
 
                     String edgeTarget = shortestPath.getGraph().getEdgeTarget(currentEdge);
                     Coordinate edgeTargetCoordinates = networkPath.getNodeCoordinate(edgeTarget);
@@ -223,45 +211,7 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                         currentRoadTraffic = bcState.get(currentEdge.toString()).f0;
                     }
 
-
-
-//                     distance to impeding object
-                    Double approxDistLeadVeh = 0.0;
-                    Double leadEdgeLength = shortestPath.getGraph().getEdgeWeight(currentEdge);
-                    Double distOnEdge = remainingDistOnEdge;
-                    Integer roadTrafficLeadEdge = currentRoadTraffic;
-                    if (currentRoadTraffic != 0) {
-                        approxDistLeadVeh = leadEdgeLength / currentRoadTraffic;
-                    }
-                    if (currentRoadTraffic == 0 || remainingDistOnEdge < approxDistLeadVeh) {
-                        int nxtEdgeIndex = currentEdgeIndex + 1;
-                        while (distOnEdge < lookAheadDistance) {
-                            if (nxtEdgeIndex < shortestPathEdgeList.size()) {
-                                DefaultWeightedEdge nextEdge = shortestPathEdgeList.get(nxtEdgeIndex);
-                                if (bcState.contains(nextEdge.toString())) {
-                                    roadTrafficLeadEdge = bcState.get(nextEdge.toString()).f0;
-                                }
-                                leadEdgeLength = shortestPath.getGraph().getEdgeWeight(nextEdge);
-                                if (roadTrafficLeadEdge != 0) {
-                                    approxDistLeadVeh = distOnEdge + (leadEdgeLength/roadTrafficLeadEdge);
-                                    break;
-                                }
-                                distOnEdge += leadEdgeLength;
-                                nxtEdgeIndex++;
-                            } else {break;}
-                        }
-                    }
-
-                    //leading object speed approx
-                    Double approxSpeedLeadVeh = SpatialFunctions.getDisplacementMetersPerSecond(leadEdgeLength, roadTrafficLeadEdge);
-                    currentDisplacementPerUnitTime = SpatialFunctions.IDM(currentDisplacementPerUnitTime, approxSpeedLeadVeh, approxDistLeadVeh);
-
-                    //update speed
-//                    System.out.println(currentDisplacementPerUnitTime);
-                    lastSpeedVState.update(currentDisplacementPerUnitTime);
-
-
-//                    currentDisplacementPerUnitTime = SpatialFunctions.getDisplacementMetersPerSecond(ROAD_CAPACITY, edgeSourceCoordinates,edgeTargetCoordinates, currentRoadTraffic, this.displacementMetersPerSecond, this.crs, this.gc);
+                    currentDisplacementPerUnitTime = SpatialFunctions.getDisplacementMetersPerSecond(ROAD_CAPACITY, edgeSourceCoordinates,edgeTargetCoordinates, currentRoadTraffic, this.displacementMetersPerSecond, this.crs, this.gc);
 //                    if (currentDisplacementPerUnitTime != 16.0) {System.out.println(currentDisplacementPerUnitTime);}
                     if (remainingDistOnEdge <= currentDisplacementPerUnitTime) {
                         outputPointCoordinates = edgeTargetCoordinates;
@@ -293,7 +243,6 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
                         lastGeometryVState.update(outputPointCoordinates);
 
                     } else {
-
                         outputPointCoordinates = networkDistribution.next(lastPointCoordinates, lastAzimuth, currentDisplacementPerUnitTime, this.crs, this.gc);
                         lastGeometryVState.update(outputPointCoordinates);
                         if (condition)
@@ -319,23 +268,22 @@ public class NetworkPointStreamGeneratorSync1tuple implements StreamGenerator, S
 
                     lastGeometryVState.update(edgeSourceCoordinates);
                     lastAzimuthVState.update(edgeAzimuth);
-                    lastSpeedVState.update(initialSpeed);
                 }
 
                 if (outputFormat.equals("GeoJSON")) {
-                        collector.collect(Serialization.generatePointJson(
-                                outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(),
-                                currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""),
-                                currentRoadTraffic, lastSpeedVState.value(),
-                                HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
+                    collector.collect(Serialization.generatePointJson(
+                            outputPointCoordinates.x, outputPointCoordinates.y, objID.f0, seqID.value(),
+                            currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""),
+                            currentRoadTraffic, currentDisplacementPerUnitTime,
+                            HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
 
                 } else {
                     collector.collect(Serialization.generateGeometryWKT(HelperClass.generatePoint(outputPointCoordinates), objID.f0, seqID.value(),
                             HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)));
                 }
             }
-                // return for testing purpose
-                // return Serialization.generatePointJson( 10.0, 10.0, objID, simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString();
+            // return for testing purpose
+            // return Serialization.generatePointJson( 10.0, 10.0, objID, simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString();
 
 
             @Override

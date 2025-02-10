@@ -212,8 +212,8 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
 
                         if (outputFormat.equals("GeoJSON")) {
                             collector.collect(Serialization.generatePointJson(
-                                            outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(),
-                                            HelperClass.TimeStamp(dateFormat, initialTimeStamp,
+                                    outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(),
+                                    HelperClass.TimeStamp(dateFormat, initialTimeStamp,
                                             timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
 
 
@@ -221,7 +221,7 @@ public class NetworkPointStreamGenerator implements StreamGenerator, Serializabl
                             collector.collect(Serialization.generateGeometryWKT(
                                     HelperClass.generatePoint(outputPointCoordinates), objID, seqID.value(),
                                     HelperClass.TimeStamp(dateFormat, initialTimeStamp,
-                                    timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)));
+                                            timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)));
                         }
                         // return for testing purpose
                         // return Serialization.generatePointJson( 10.0, 10.0, objID, simpleDateFormat.format(HelperClass.localDateTimeToDate(localDateTime))).toString();

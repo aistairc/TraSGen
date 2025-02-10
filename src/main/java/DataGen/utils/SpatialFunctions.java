@@ -16,7 +16,6 @@
 
 package DataGen.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.GeodeticCalculator;
 import org.locationtech.jts.geom.Coordinate;
@@ -40,21 +39,11 @@ public class SpatialFunctions implements Serializable {
         try {
 //            distance = JTS.orthodromicDistance(firstCoordinate,secondCoordinate,crs); //caused low throughput with parallelism
             //Optimized
-
             gc.setStartingPosition(JTS.toDirectPosition(firstCoordinate, crs));
             gc.setDestinationPosition(JTS.toDirectPosition(secondCoordinate, crs));
             distance =  gc.getOrthodromicDistance();
 
-//            if (distance == 0.0) {
-//                throw new IllegalArgumentException("Coordinate A: " + firstCoordinate + ", Coordinate B:"  + secondCoordinate);
-//            }
-
-        }
-//        catch (IllegalArgumentException e) {
-//            e.printStackTrace();
-//            System.exit(0);
-//        }
-        catch (TransformException e) {
+        } catch (TransformException e) {
             e.printStackTrace();
         }
 
@@ -73,7 +62,6 @@ public class SpatialFunctions implements Serializable {
             gc.setStartingPosition(JTS.toDirectPosition(startingCoordinate, crs));
             gc.setDestinationPosition(JTS.toDirectPosition(destinationCoordinate, crs));
             angle = gc.getAzimuth();
-
         } catch (TransformException e) {
             e.printStackTrace();
         }
@@ -89,6 +77,28 @@ public class SpatialFunctions implements Serializable {
         float cm = remaining_cm / 100;
         System.out.println("Distance = " + km + "km " + meters + "m " + cm + "cm");
         */
+    }
+
+
+    public static double getDisplacementMetersPerSecond(int roadCapacity, Coordinate edgeSourceCoordinates,
+                                                        Coordinate edgeTargetCoordinates, int currentRoadTraffic,
+                                                        double displacementMetersPerSecond, CoordinateReferenceSystem crs,
+                                                        GeodeticCalculator gc){
+
+        double roadLength = SpatialFunctions.getDistanceInMeters(edgeSourceCoordinates, edgeTargetCoordinates, crs, gc);
+        double carLength = 10; //meters
+        double lanes = 2;
+
+        if (roadLength <= carLength)
+            roadCapacity = 1;
+        else
+            roadCapacity = (int) ((roadLength/carLength) * lanes);
+
+        if(currentRoadTraffic <= roadCapacity){
+            return displacementMetersPerSecond;
+        }
+
+        return ((float)roadCapacity/currentRoadTraffic)*displacementMetersPerSecond;
     }
 
     public static Coordinate
@@ -109,116 +119,6 @@ public class SpatialFunctions implements Serializable {
 
         return new Coordinate(dest.getX(), dest.getY());
     }
-
-
-    public static double getDisplacementMetersPerSecond(int roadCapacity, Coordinate edgeSourceCoordinates,
-                                                        Coordinate edgeTargetCoordinates, int currentRoadTraffic,
-                                                        double displacementMetersPerSecond, CoordinateReferenceSystem crs,
-                                                        GeodeticCalculator gc){
-
-        double roadLength = SpatialFunctions.getDistanceInMeters(edgeSourceCoordinates, edgeTargetCoordinates, crs, gc);
-        double carLength = 5; //meters
-        double lanes = 2;
-
-        if (roadLength <= carLength)
-            roadCapacity = 1;
-        else
-            roadCapacity = (int) ((roadLength/carLength) * lanes);
-
-        if(currentRoadTraffic <= roadCapacity){
-            return displacementMetersPerSecond;
-        }
-
-        return ((float)roadCapacity/currentRoadTraffic)*displacementMetersPerSecond;
-    }
-
-
-    public static double getDisplacementMetersPerSecond(double roadLength, int currentRoadTraffic){
-
-        double desiredVelocity = 120.0; //  (m/s)
-        double carLength = 5; //meters
-        double lanes = 1; // one way;
-        double minVelocity = 10.0;
-
-        int minRoadCapacity;
-        int roadCapacity;
-        if (roadLength <= carLength) {
-            roadCapacity = 1;
-            minRoadCapacity = 1;
-        }
-        else {
-            roadCapacity = (int) ((roadLength / carLength) * lanes);
-            minRoadCapacity = roadCapacity / 4;
-        }
-
-
-
-//        System.out.println("currentRoadTraffic " + currentRoadTraffic + "roadCapacity " + roadCapacity );
-
-        if(currentRoadTraffic <= minRoadCapacity){
-            return desiredVelocity;
-        }
-
-        double newVelocity = Math.max(minVelocity, (float) (minRoadCapacity /currentRoadTraffic)*desiredVelocity);
-
-//        System.out.println("newVelocity " + newVelocity);
-
-        return newVelocity;
-    }
-
-
-
-    //// ------- IDM  Speed Calculation ---------
-    public static double calculateAcceleration(double velocity, double distanceToLead, double leadVelocity) {
-
-        // Parameters for the IDM
-        double desiredVelocity = 120.0; //  (m/s)
-        double maxAcceleration = 1.5;  //  (m/s^2)      //a
-        double desiredTimeGap = 1;   // (s)           //T
-        double minSpacing = 2.0;       // (m)
-        double comfortableDeceleration = 2.0; //(m/s^2) //b
-        double delta = 4;
-        double minAcceleration = -9.8; // Maximum deceleration (emergency braking, m/s^2)
-
-        if (distanceToLead == 0.0)
-
-        {
-//                System.out.println("followvelocity: " + velocity + "distanceToLead: " + distanceToLead + "leadVelocity: " + leadVelocity);
-            distanceToLead = HelperClass.getRandomDoubleInRange(20, 70); // TODO minSpacing, lookheadDistance
-//                System.out.println("correctedDistanceToLead: " + distanceToLead);
-        }
-
-
-        double freeRoadTerm = 1 - Math.pow(velocity / desiredVelocity, delta);  // (1 - v/v0)^sigma
-        double deltaV = velocity - leadVelocity;
-        double safeDistance = minSpacing + Math.max(0, velocity * desiredTimeGap + (velocity * deltaV) /
-                (2 * Math.sqrt(maxAcceleration * comfortableDeceleration)));            // s*
-        double interactionTerm = Math.pow(safeDistance / distanceToLead, 2);    //(s*/s)^2
-        double rawAcceleration =  maxAcceleration * (freeRoadTerm - interactionTerm);
-
-        return Math.max(minAcceleration, rawAcceleration);
-
-    }
-
-
-    public static Double IDM(double followVelocity, double leadVelocity, double distanceToLead) throws JsonProcessingException {
-
-        double timeStep = 1;
-        double minVelocity = 10; //  (m/s)
-        double acceleration = calculateAcceleration(followVelocity, distanceToLead, leadVelocity);
-
-//            System.out.println("acceleration: " + acceleration);
-
-        // Update vehicle velocity
-        double newVelocity = Math.max(minVelocity, followVelocity + acceleration * timeStep);
-
-
-        return newVelocity;
-
-    }
-
-
-
 
     public static void copy(final Coordinate point, final double[] ordinates) {
 

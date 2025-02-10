@@ -243,11 +243,11 @@ public class NetworkPointStreamGeneratorAsync implements StreamGenerator, Serial
                 }
 
                 if (outputFormat.equals("GeoJSON")) {
-                        collector.collect(Serialization.generatePointJson(
-                        outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(),
-                                currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""),
-                                currentRoadTraffic, currentDisplacementPerUnitTime,
-                                HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
+                    collector.collect(Serialization.generatePointJson(
+                            outputPointCoordinates.x, outputPointCoordinates.y, objID, seqID.value(),
+                            currentEdge.toString().replaceAll("[\\p{Ps}\\p{Pe}]", ""),
+                            currentRoadTraffic, currentDisplacementPerUnitTime,
+                            HelperClass.TimeStamp(dateFormat, initialTimeStamp, timeStepinMilliSec, batchID, timeGen, randomizeTimeInBatch)).toString());
 
                 } else {
                     collector.collect(Serialization.generateGeometryWKT(
